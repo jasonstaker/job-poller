@@ -82,6 +82,7 @@ CLEARANCE_WINDOW_AFTER = 24
 
 _DASHES = re.compile(r"[‐-―−]")
 _SMART_QUOTES = re.compile(r"[‘’‛]")
+_SMART_DQUOTES = re.compile(r"[“”„‟]")
 _WS = re.compile(r"\s+")
 _SCRIPT_STYLE = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.S | re.I)
 _BLOCK_TAGS = re.compile(r"</?(br|p|li|div|h[1-6]|tr|ul|ol|table)[^>]*>", re.I)
@@ -148,6 +149,7 @@ def normalize_title(title: str) -> str:
     s = unicodedata.normalize("NFKD", s)
     s = _DASHES.sub("-", s)
     s = _SMART_QUOTES.sub("'", s)
+    s = _SMART_DQUOTES.sub('"', s)
     s = s.casefold()
     return _WS.sub(" ", s).strip()
 
@@ -171,6 +173,7 @@ def normalize_content(raw: str) -> str:
     s = unicodedata.normalize("NFKD", s)
     s = _DASHES.sub("-", s)
     s = _SMART_QUOTES.sub("'", s)
+    s = _SMART_DQUOTES.sub('"', s)
     s = s.casefold()
     # Collapse last, so the doubled spaces left behind by stripped tags disappear.
     return _WS.sub(" ", s).strip()
