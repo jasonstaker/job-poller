@@ -1,9 +1,11 @@
 name: poll
 
 on:
-  # Enable this only after a few successful manual runs. See README "Going live".
-  # schedule:
-  #   - cron: '*/30 * * * *'
+  schedule:
+    # Every 30 minutes, per BUILD_SPEC.md section 8. GitHub's scheduler is best-effort and
+    # can lag several minutes under load; that is acceptable for a minutes-to-an-hour
+    # latency target. Actions minutes are unlimited on a public repo, so this is free.
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       dry_run:
