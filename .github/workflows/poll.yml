@@ -1,0 +1,87 @@
+name: poll
+
+on:
+  # Enable this only after a few successful manual runs. See README "Going live".
+  # schedule:
+  #   - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run the full pipeline but send no pushes and write no state'
+        type: boolean
+        default: false
+      probe:
+        description: 'Only probe every board and print status + job counts'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write          # needed to commit state/seen.json back
+
+# Two overlapping runs would both read seen.json at HEAD, and the second commit would
+# clobber or conflict with the first. Not in the spec, but required for correctness once
+# cron is on: a run takes ~1.5 min and GitHub's scheduler can bunch runs together after a
+# delay. cancel-in-progress stays false so a run in flight is never killed mid-notify.
+concurrency:
+  group: poll
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The state file grows with every run and its history is never needed here.
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'    # matches local development
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Poll
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          if [ "${{ inputs.probe }}" = "true" ]; then
+            python poller.py --probe
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
+            python poller.py --dry-run
+          else
+            python poller.py
+          fi
+
+      - name: Commit state
+        # Runs even if the poll step failed, so a partially-advanced state is not lost.
+        # Skipped for probe/dry-run, neither of which writes state.
+        if: always() && inputs.probe != true && inputs.dry_run != true
+        run: |
+          if [ -n "$(git status --porcelain state/seen.json)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state/seen.json
+            git commit -m "state: run $(python -c "import json;print(json.load(open('state/seen.json'))['run_counter'])")"
+            git push
+          else
+            echo "state/seen.json unchanged, nothing to commit"
+          fi
+
+  test:
+    # Manual runs only. On a */30 cron this would re-run the suite 1,440 times a month
+    # against code that has not changed, roughly doubling the Actions bill for nothing.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
