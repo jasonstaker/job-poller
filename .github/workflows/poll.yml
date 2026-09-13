@@ -14,6 +14,10 @@ on:
         description: 'Only probe every board and print status + job counts'
         type: boolean
         default: false
+      test_notify:
+        description: 'Send a single test push to verify NTFY_TOPIC, then stop'
+        type: boolean
+        default: false
 
 permissions:
   contents: write          # needed to commit state/seen.json back
@@ -49,7 +53,9 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: |
-          if [ "${{ inputs.probe }}" = "true" ]; then
+          if [ "${{ inputs.test_notify }}" = "true" ]; then
+            python poller.py --test-notify
+          elif [ "${{ inputs.probe }}" = "true" ]; then
             python poller.py --probe
           elif [ "${{ inputs.dry_run }}" = "true" ]; then
             python poller.py --dry-run
@@ -60,7 +66,7 @@ jobs:
       - name: Commit state
         # Runs even if the poll step failed, so a partially-advanced state is not lost.
         # Skipped for probe/dry-run, neither of which writes state.
-        if: always() && inputs.probe != true && inputs.dry_run != true
+        if: always() && inputs.probe != true && inputs.dry_run != true && inputs.test_notify != true
         run: |
           if [ -n "$(git status --porcelain state/seen.json)" ]; then
             git config user.name  "github-actions[bot]"

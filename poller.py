@@ -605,6 +605,27 @@ def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) ->
                       seen_key(job))
 
 
+def cmd_test_notify() -> int:
+    """Send one push and exit. Verifies the whole notification path end to end.
+
+    Worth having as a permanent mode rather than a one-off: a working poller that finds
+    nothing for a week looks exactly like a poller whose NTFY_TOPIC is wrong, and the
+    difference only shows up when a posting is missed. This tells them apart in 5 seconds.
+
+    The em-dash in the title is deliberate. As an HTTP header it would raise
+    UnicodeEncodeError under latin-1, so a push that arrives intact is proof the JSON API
+    deviation in notify.py actually works against the real service.
+    """
+    ok = notify.send(
+        title="Job poller — test push",
+        body="NTFY_TOPIC is wired correctly.\n"
+             "The em-dash in this title proves UTF-8 encoding survives end to end.",
+        tags="white_check_mark",
+    )
+    log.info("test push: %s", "sent" if ok else "FAILED")
+    return 0 if ok else 1
+
+
 # --------------------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------------------
@@ -618,6 +639,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
                    help="run the full pipeline but send no pushes and write no state")
     p.add_argument("--source", help="comma-separated source ids, e.g. greenhouse:vardaspace")
     p.add_argument("--ats", help="comma-separated ats types, e.g. lever,ashby")
+    p.add_argument("--test-notify", action="store_true",
+                   help="send one test push and exit; verifies NTFY_TOPIC end to end")
     p.add_argument("--no-jitter", action="store_true", help="skip inter-request sleeps")
     p.add_argument("--force-workday", action="store_true",
                    help="poll Workday regardless of the every-4th-run cadence")
@@ -636,6 +659,9 @@ def main(argv: list[str] | None = None) -> int:
     # urllib3 logs every retry at WARNING; section 9 wants one tidy line per source and
     # the retry noise buries it.
     logging.getLogger("urllib3").setLevel(logging.ERROR)
+
+    if args.test_notify:
+        return cmd_test_notify()
 
     if args.probe:
         sources = select(load_sources(), args.source, args.ats)
