@@ -342,3 +342,194 @@ def test_every_request_carries_a_timeout(ctx_factory):
     ctx = FetchContext(session=RecordingSession(), jitter=False)
     fetch_greenhouse(cfg, ctx)
     assert captured["timeout"] == (5.0, 20.0)
+
+
+# --------------------------------------------------------------------------------------
+# Lever
+# --------------------------------------------------------------------------------------
+
+LEVER_PAYLOAD = [
+    {
+        "id": "abc-123",
+        "text": "Software Engineering Intern",       # NOT "title"
+        "hostedUrl": "https://jobs.lever.co/shieldai/abc-123",
+        "categories": {"location": "San Diego, CA", "team": "Autonomy",
+                       "commitment": "Intern"},
+        "createdAt": 1757700000000,                   # epoch MILLISECONDS
+    },
+    {
+        "id": "def-456",
+        "text": "Mechanical Engineer",
+        "hostedUrl": "https://jobs.lever.co/shieldai/def-456",
+        "categories": {},
+    },
+]
+
+
+def lever_cfg(slug="shieldai", company="Shield AI"):
+    cfg = {"ats": "lever", "slug": slug, "company": company}
+    cfg["source_id"] = handlers.source_id(cfg)
+    return cfg
+
+
+LEVER_URL = "https://api.lever.co/v0/postings/shieldai?mode=json"
+
+
+def test_lever_parses_bare_top_level_array(ctx_factory):
+    cfg = lever_cfg()
+    ctx, _ = ctx_factory({LEVER_URL: FakeResponse(200, LEVER_PAYLOAD)})
+    status, jobs = handlers.fetch_lever(cfg, ctx)
+
+    assert status == 200 and len(jobs) == 2
+    assert jobs[0]["title"] == "Software Engineering Intern", "title comes from `text`"
+    assert jobs[0]["job_id"] == "abc-123"
+    assert jobs[0]["location"] == "San Diego, CA"
+    assert jobs[0]["department"] == "Autonomy"
+    assert jobs[0]["source"] == "lever:shieldai"
+
+
+def test_lever_converts_epoch_milliseconds(ctx_factory):
+    cfg = lever_cfg()
+    ctx, _ = ctx_factory({LEVER_URL: FakeResponse(200, LEVER_PAYLOAD)})
+    _, jobs = handlers.fetch_lever(cfg, ctx)
+    # Seconds would land in 1970; milliseconds land in 2025.
+    assert jobs[0]["posted_at"].startswith("2025-"), jobs[0]["posted_at"]
+
+
+def test_lever_missing_categories_does_not_crash(ctx_factory):
+    cfg = lever_cfg()
+    ctx, _ = ctx_factory({LEVER_URL: FakeResponse(200, LEVER_PAYLOAD)})
+    _, jobs = handlers.fetch_lever(cfg, ctx)
+    assert jobs[1]["location"] == "" and jobs[1]["department"] == ""
+
+
+def test_lever_object_response_raises(ctx_factory):
+    """A dict where an array belongs means the API changed; fail loudly, not silently."""
+    cfg = lever_cfg()
+    ctx, _ = ctx_factory({LEVER_URL: FakeResponse(200, {"jobs": []})})
+    with pytest.raises(ValueError, match="top-level array"):
+        handlers.fetch_lever(cfg, ctx)
+
+
+def test_lever_does_not_send_commitment_filter(ctx_factory):
+    """Section 4.2: companies mislabel commitment, so server-side filtering only loses jobs."""
+    cfg = lever_cfg()
+    ctx, session = ctx_factory({LEVER_URL: FakeResponse(200, LEVER_PAYLOAD)})
+    handlers.fetch_lever(cfg, ctx)
+    assert all("commitment" not in url for _, url, _ in session.calls)
+
+
+def test_lever_empty_board_is_not_an_error(ctx_factory):
+    """Section 5 says the Attabotics board may be legitimately empty."""
+    cfg = lever_cfg("attabotics", "Attabotics")
+    url = "https://api.lever.co/v0/postings/attabotics?mode=json"
+    ctx, _ = ctx_factory({url: FakeResponse(200, [])})
+    status, jobs = handlers.fetch_lever(cfg, ctx)
+    assert status == 200 and jobs == []
+
+
+# --------------------------------------------------------------------------------------
+# Ashby
+# --------------------------------------------------------------------------------------
+
+ASHBY_PAYLOAD = {
+    "jobs": [
+        {
+            "id": "9f1c-ab",
+            "title": "Software Engineer, Intern",
+            "location": "Torrance, CA",
+            "team": "Platform",
+            "employmentType": "Intern",
+            "publishedAt": "2026-09-11T12:00:00Z",
+            "jobUrl": "https://jobs.ashbyhq.com/K2space/9f1c-ab",
+        }
+    ]
+}
+
+
+def ashby_cfg(board="K2space", company="K2 Space"):
+    cfg = {"ats": "ashby", "board": board, "company": company}
+    cfg["source_id"] = handlers.source_id(cfg)
+    return cfg
+
+
+def test_ashby_parses(ctx_factory):
+    cfg = ashby_cfg()
+    url = "https://api.ashbyhq.com/posting-api/job-board/K2space"
+    ctx, _ = ctx_factory({url: FakeResponse(200, ASHBY_PAYLOAD)})
+    status, jobs = handlers.fetch_ashby(cfg, ctx)
+
+    assert status == 200 and len(jobs) == 1
+    assert jobs[0]["job_id"] == "9f1c-ab"
+    assert jobs[0]["department"] == "Platform", "falls back to team"
+    assert jobs[0]["url"].endswith("/9f1c-ab")
+    assert jobs[0]["posted_at"] == "2026-09-11T12:00:00Z"
+
+
+@pytest.mark.parametrize("board", ["K2space", "Luminary"])
+def test_ashby_url_preserves_board_capitalization(ctx_factory, board):
+    """Board names are case-sensitive; lowercasing them 404s."""
+    cfg = ashby_cfg(board)
+    url = f"https://api.ashbyhq.com/posting-api/job-board/{board}"
+    ctx, session = ctx_factory({url: FakeResponse(200, {"jobs": []})})
+    handlers.fetch_ashby(cfg, ctx)
+    assert session.calls[0][1].endswith(f"/{board}")
+    assert board in session.calls[0][1]
+
+
+def test_ashby_missing_jobs_key_is_empty_not_a_crash(ctx_factory):
+    cfg = ashby_cfg("havocai", "HavocAI")
+    url = "https://api.ashbyhq.com/posting-api/job-board/havocai"
+    ctx, _ = ctx_factory({url: FakeResponse(200, {})})
+    status, jobs = handlers.fetch_ashby(cfg, ctx)
+    assert status == 200 and jobs == []
+
+
+def test_all_three_handlers_registered():
+    assert set(handlers.HANDLERS) == {"greenhouse", "lever", "ashby"}
+
+
+def test_unreachable_eu_fallback_reports_the_original_404(ctx_factory):
+    """A fallback host that is merely unreachable must not mask a real 404.
+
+    Confirmed live: boards-api.eu.greenhouse.io does not resolve from every network. A
+    dead token is actionable; a DNS error looks like a transient blip and is not.
+    """
+    cfg = gh_cfg("pyka", "Pyka")
+
+    class FlakySession:
+        calls = []
+
+        def request(self, method, url, json=None, headers=None, timeout=None):
+            self.calls.append(url)
+            if GH_EU in url:
+                raise requests.ConnectionError("NameResolutionError")
+            return FakeResponse(404, {})
+
+    ctx = FetchContext(session=FlakySession(), jitter=False)
+    with pytest.raises(requests.HTTPError) as exc:
+        fetch_greenhouse(cfg, ctx)
+    assert exc.value.response.status_code == 404
+    assert ctx.greenhouse_eu_unavailable is True
+
+
+def test_eu_unavailable_flag_skips_later_fallbacks(ctx_factory):
+    """Once EU is known bad for this run, later 404s must not re-pay the DNS timeout."""
+    cfg = gh_cfg("deadtoken")
+    ctx, session = ctx_factory({})
+    ctx.greenhouse_eu_unavailable = True
+    with pytest.raises(requests.HTTPError):
+        fetch_greenhouse(cfg, ctx)
+    assert all(GH_EU not in url for _, url, _ in session.calls)
+
+
+def test_primary_connection_error_is_surfaced_not_swallowed(ctx_factory):
+    cfg = gh_cfg()
+
+    class DeadSession:
+        def request(self, *a, **kw):
+            raise requests.ConnectTimeout("connect timed out")
+
+    ctx = FetchContext(session=DeadSession(), jitter=False)
+    result = fetch_source(cfg, ctx)
+    assert not result.ok and "ConnectTimeout" in result.error

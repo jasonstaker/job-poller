@@ -87,6 +87,9 @@ class FetchContext:
     # Per-source memoized hints read back from state/seen.json, keyed by source id.
     state_hints: dict[str, dict] = field(default_factory=dict)
     requests_made: int = 0
+    # Set once per run if the Greenhouse EU host turns out not to resolve, so the
+    # remaining 404ing boards do not each pay a DNS timeout.
+    greenhouse_eu_unavailable: bool = False
 
     def hint(self, sid: str, key: str, default: Any = None) -> Any:
         return self.state_hints.get(sid, {}).get(key, default)
@@ -244,14 +247,35 @@ def fetch_greenhouse(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
     preferred = ctx.hint(sid, "greenhouse_host", "us")
     order = [preferred] + [h for h in ("us", "eu") if h != preferred]
 
-    last_status = None
-    for host in order:
+    primary_resp: requests.Response | None = None
+    primary_exc: Exception | None = None
+
+    for index, host in enumerate(order):
+        is_primary = index == 0
+        # The EU host does not resolve from every network -- confirmed NXDOMAIN during the
+        # step 3 probe. Once that is known for a run, skip it rather than paying a DNS
+        # timeout for every 404ing board.
+        if not is_primary and host == "eu" and ctx.greenhouse_eu_unavailable:
+            break
+
         url = f"{GREENHOUSE_HOSTS[host]}/v1/boards/{token}/jobs"
-        resp = http_request("GET", url, ctx=ctx)
-        last_status = resp.status_code
+        try:
+            resp = http_request("GET", url, ctx=ctx)
+        except requests.RequestException as exc:
+            if is_primary:
+                primary_exc = exc
+                continue
+            if host == "eu":
+                ctx.greenhouse_eu_unavailable = True
+            ctx.log.debug("greenhouse %s: fallback host %s unreachable: %s", token, host, exc)
+            break
+
         if resp.status_code == 404:
-            ctx.log.debug("greenhouse %s 404 on %s host", token, host)
-            continue
+            if is_primary:
+                primary_resp = resp
+                continue
+            break
+
         resp.raise_for_status()
         jobs = _greenhouse_parse(cfg, resp.json())
         if host != preferred:
@@ -259,8 +283,12 @@ def fetch_greenhouse(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
             cfg.setdefault("_state_updates", {})["greenhouse_host"] = host
         return resp.status_code, jobs
 
-    resp.raise_for_status()  # every host 404'd; surface it as a real failure
-    return last_status, []   # pragma: no cover - raise_for_status always fires above
+    # Report the PREFERRED host's outcome. A fallback that is merely unreachable must
+    # never mask the real answer -- otherwise a plain 404 (a dead token, actionable) gets
+    # reported as a DNS failure (a network blip, not actionable).
+    if primary_resp is not None:
+        primary_resp.raise_for_status()
+    raise primary_exc if primary_exc else RuntimeError(f"greenhouse {token}: no response")
 
 
 def greenhouse_fetch_content(cfg: dict, job_id: str, ctx: FetchContext) -> str:
@@ -283,6 +311,82 @@ def greenhouse_fetch_content(cfg: dict, job_id: str, ctx: FetchContext) -> str:
 
 
 # --------------------------------------------------------------------------------------
+# Lever
+# --------------------------------------------------------------------------------------
+
+
+def fetch_lever(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
+    """GET /v0/postings/{slug}?mode=json
+
+    Two shapes to watch. The response is a BARE TOP-LEVEL ARRAY, not an object wrapping a
+    jobs key, and the title field is `text`, not `title`.
+
+    `&commitment=Intern` is deliberately not sent. Section 4.2 warns that many companies
+    mislabel commitment, and a server-side filter can only ever lose jobs -- the client-side
+    title filter is the real gate either way.
+    """
+    slug = cfg["slug"]
+    url = f"https://api.lever.co/v0/postings/{slug}?mode=json"
+    resp = http_request("GET", url, ctx=ctx)
+    resp.raise_for_status()
+
+    data = resp.json()
+    if not isinstance(data, list):
+        raise ValueError(f"lever {slug}: expected a top-level array, got {type(data).__name__}")
+
+    jobs = []
+    for raw in data:
+        categories = raw.get("categories") or {}
+        jobs.append(
+            normalize_job(
+                cfg,
+                job_id=raw.get("id"),
+                title=raw.get("text"),          # NOT "title"
+                url=raw.get("hostedUrl") or raw.get("applyUrl"),
+                location=categories.get("location"),
+                department=categories.get("team") or categories.get("department"),
+                posted_at=_epoch_ms_to_iso(raw.get("createdAt")),   # epoch MILLISECONDS
+                content=raw.get("descriptionPlain") or raw.get("description") or "",
+            )
+        )
+    return resp.status_code, jobs
+
+
+# --------------------------------------------------------------------------------------
+# Ashby
+# --------------------------------------------------------------------------------------
+
+
+def fetch_ashby(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
+    """GET /posting-api/job-board/{boardName}
+
+    The board name is CASE-SENSITIVE -- sources.json carries `Luminary` and `K2space` with
+    capitals, and lowercasing either one 404s. Nothing here may casefold it.
+    """
+    board = cfg["board"]
+    url = f"https://api.ashbyhq.com/posting-api/job-board/{board}"
+    resp = http_request("GET", url, ctx=ctx)
+    resp.raise_for_status()
+
+    payload = resp.json()
+    jobs = []
+    for raw in payload.get("jobs") or []:
+        jobs.append(
+            normalize_job(
+                cfg,
+                job_id=raw.get("id"),
+                title=raw.get("title"),
+                url=raw.get("jobUrl") or raw.get("applyUrl"),
+                location=raw.get("location"),
+                department=raw.get("department") or raw.get("team"),
+                posted_at=_clean(raw.get("publishedAt") or raw.get("updatedAt")),
+                content=raw.get("descriptionPlain") or "",
+            )
+        )
+    return resp.status_code, jobs
+
+
+# --------------------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------------------
 
@@ -290,6 +394,8 @@ Handler = Callable[[dict, FetchContext], "tuple[int, list[dict]]"]
 
 HANDLERS: dict[str, Handler] = {
     "greenhouse": fetch_greenhouse,
+    "lever": fetch_lever,
+    "ashby": fetch_ashby,
 }
 
 
