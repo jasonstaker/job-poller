@@ -1,6 +1,6 @@
-"""Entry point: load sources, fetch, diff, filter, notify, persist.
+"""Entry point: load sources, fetch, diff, dedupe, filter, notify, persist.
 
-Build order step 3 landed `--probe`. The full run loop arrives in step 4.
+The pipeline order in `run` is load-bearing; see the comment there before rearranging it.
 """
 
 from __future__ import annotations
@@ -8,27 +8,70 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import pathlib
+import re
 import sys
+import unicodedata
+from datetime import datetime, timezone
 
+import filters
 import handlers
-from handlers import ID_FIELDS, SKIP_ATS, FetchContext, build_session, fetch_source, source_id
+import notify
+from handlers import (
+    ID_FIELDS,
+    SKIP_ATS,
+    FetchContext,
+    build_session,
+    fetch_source,
+    greenhouse_fetch_content,
+    source_id,
+)
 
 ROOT = pathlib.Path(__file__).parent
 SOURCES_PATH = ROOT / "sources.json"
 STATE_PATH = ROOT / "state" / "seen.json"
 
+SCHEMA_VERSION = 1
+
+# Section 7: more than this many notifiable jobs in one run collapses to a summary.
+SUMMARY_THRESHOLD = 8
+# Not in the spec. If a run ever produces this many new jobs, something is wrong with the
+# state file rather than with the job market -- suppress the flood and say so instead.
+ANOMALY_THRESHOLD = 200
+# Section 9 alert thresholds.
+FAILURE_ALERT_STREAK = 3
+ZERO_ALERT_STREAK = 5
+# Section 9 taken literally would re-alert every 30 minutes forever on a permanently dead
+# board. Fire at the threshold, then at most once a day (48 runs at the */30 cadence).
+ALERT_COOLDOWN_RUNS = 48
+# Section 8: Workday throttles harder, so poll it every 4th run (~2 hours).
+WORKDAY_EVERY_N_RUNS = 4
+
+# Which board wins when the same role appears on two of them. Greenhouse first because it
+# is the only ATS that exposes a description body for the clearance check.
+SOURCE_PRIORITY = {"greenhouse": 0, "ashby": 1, "lever": 2,
+                   "workday": 3, "workable": 4, "bamboohr": 5}
+
 log = logging.getLogger("poller")
+
+
+class StateCorrupt(RuntimeError):
+    """seen.json exists but cannot be trusted. Never overwrite it; abort instead."""
+
+
+# --------------------------------------------------------------------------------------
+# Sources
+# --------------------------------------------------------------------------------------
 
 
 def load_sources(path: pathlib.Path = SOURCES_PATH) -> list[dict]:
     """Flatten sources.json into a list of source configs.
 
-    sources.json stays byte-identical to BUILD_SPEC.md section 5 -- it is data, not code.
-    Section 3 step 2 talks about "the handler for its `ats` type" as though each entry
-    carried an `ats` field, but in section 5 the ats type is the *outer key*. That is
-    resolved here by injecting `ats` and `source_id` into each record, rather than by
-    editing the spec's data.
+    sources.json mirrors BUILD_SPEC.md section 5 -- it is data, not code. Section 3 step 2
+    talks about "the handler for its `ats` type" as though each entry carried an `ats`
+    field, but in section 5 the ats type is the *outer key*. That is reconciled here by
+    injecting `ats` and `source_id`, rather than by reshaping the spec's data.
     """
     raw = json.loads(path.read_text(encoding="utf-8"))
     sources: list[dict] = []
@@ -37,6 +80,12 @@ def load_sources(path: pathlib.Path = SOURCES_PATH) -> list[dict]:
             continue
         if ats not in ID_FIELDS:
             log.warning("sources.json has unknown ats %r, skipping", ats)
+            continue
+        if ats not in handlers.HANDLERS:
+            # Build order steps 7-8 add Workday, Workable and BambooHR. Until then these
+            # are skipped rather than polled-and-failed, so they cannot march toward the
+            # section 9 three-strike alert for a handler that simply is not written yet.
+            log.debug("no handler for ats %r yet, skipping %d source(s)", ats, len(entries))
             continue
         for entry in entries:
             cfg = dict(entry)
@@ -57,6 +106,262 @@ def select(sources: list[dict], only: str | None, ats: str | None) -> list[dict]
     return sources
 
 
+def should_poll(ats: str, run_counter: int, force_workday: bool = False) -> bool:
+    """Section 8: everything every run, except Workday every 4th."""
+    if ats != "workday" or force_workday:
+        return True
+    return run_counter % WORKDAY_EVERY_N_RUNS == 0
+
+
+# --------------------------------------------------------------------------------------
+# State
+# --------------------------------------------------------------------------------------
+
+
+def utcnow() -> str:
+    """Always UTC. Development is on Windows local time, CI is UTC."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def new_state() -> dict:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "bootstrapped_at": None,
+        "last_run_at": None,
+        "run_counter": 0,
+        "sources": {},
+        "seen": {},
+    }
+
+
+def _tmp_path(path: pathlib.Path) -> pathlib.Path:
+    # Same directory, so os.replace stays atomic instead of degrading to a cross-device
+    # copy the way a system-temp file would.
+    return path.parent / (path.name + ".tmp")
+
+
+def load_state(path: pathlib.Path = STATE_PATH) -> tuple[dict, bool]:
+    """Return (state, is_bootstrap).
+
+    Bootstrap is detected by the explicit `bootstrapped_at` sentinel, never by
+    `len(seen) == 0`. Those are different situations: a first run has no sentinel, whereas
+    a poller whose boards all happen to be empty has one. Conflating them would re-flood
+    the user with hundreds of pushes the first time every board went quiet.
+
+    A file that exists but cannot be parsed is CORRUPT and raises. It is never overwritten
+    and never re-bootstrapped: silently starting over would look like success while
+    destroying history, and the recovery (`git checkout HEAD~1 -- state/seen.json`) is only
+    possible if the bad state was not committed on top of the good one.
+    """
+    stale = _tmp_path(path)
+    if stale.exists():
+        # Never promote a temp file -- there is no way to know it was complete.
+        log.warning("discarding stale %s from an interrupted write", stale.name)
+        stale.unlink()
+
+    if not path.exists():
+        return new_state(), True
+
+    text = path.read_text(encoding="utf-8")
+    if not text.strip():
+        log.warning("%s is empty; treating as first run", path)
+        return new_state(), True
+
+    try:
+        state = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise StateCorrupt(f"{path} is not valid JSON: {exc}") from exc
+
+    if not isinstance(state, dict):
+        raise StateCorrupt(f"{path} is a {type(state).__name__}, expected an object")
+    if not isinstance(state.get("seen"), dict):
+        raise StateCorrupt(f"{path} has no usable 'seen' object")
+    if not isinstance(state.get("sources"), dict):
+        raise StateCorrupt(f"{path} has no usable 'sources' object")
+    if state.get("schema_version", 1) > SCHEMA_VERSION:
+        raise StateCorrupt(
+            f"{path} is schema v{state['schema_version']}, this poller understands "
+            f"v{SCHEMA_VERSION}. Upgrade the poller rather than downgrading the state."
+        )
+
+    state.setdefault("run_counter", 0)
+    state.setdefault("last_run_at", None)
+    return state, not state.get("bootstrapped_at")
+
+
+def save_state(path: pathlib.Path, state: dict) -> None:
+    """Atomic write.
+
+    sort_keys is load-bearing rather than cosmetic: it keeps the git diff minimal and
+    deterministic, and because every seen key starts with its source id, a flat sorted dict
+    groups each board's entries contiguously anyway.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = _tmp_path(path)
+    payload = json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(payload)
+        fh.flush()
+        os.fsync(fh.fileno())
+    # os.replace, NOT os.rename: rename raises FileExistsError on Windows when the
+    # destination exists, which is every run after the first.
+    os.replace(tmp, path)
+
+
+def seen_key(job: dict) -> str:
+    """"{source}::{job_id}". Split with split("::", 1) -- source ids never contain "::"."""
+    return f"{job['source']}::{job['job_id']}"
+
+
+def record_seen(state: dict, job: dict, outcome: str, *, reason: str = "",
+                duplicate_of: str = "", now: str = "") -> None:
+    """Write one job into seen.json with what happened to it.
+
+    Section 3 step 7 requires that rejected jobs are recorded too, so a rejection is never
+    re-evaluated and can never re-notify. `reason` is kept so every rejection stays
+    auditable -- after a month the keyword lists can be tuned against real evidence.
+    """
+    entry = {"first_seen": now or utcnow(), "outcome": outcome}
+    # Bootstrap writes thousands of rows at once and those titles have no debugging value.
+    if outcome != "bootstrap":
+        entry["title"] = job["title"]
+    if reason:
+        entry["reason"] = reason
+    if duplicate_of:
+        entry["duplicate_of"] = duplicate_of
+    state["seen"][seen_key(job)] = entry
+
+
+# --------------------------------------------------------------------------------------
+# Diff and dedupe
+# --------------------------------------------------------------------------------------
+
+
+_NON_ALNUM = re.compile(r"[^a-z0-9]+")
+
+
+def _norm(text: str) -> str:
+    s = unicodedata.normalize("NFKD", text or "").casefold()
+    return _NON_ALNUM.sub(" ", s).strip()
+
+
+def dedupe_key(job: dict) -> tuple[str, str]:
+    return (_norm(job["company"]), _norm(job["title"]))
+
+
+def diff_new(jobs: list[dict], state: dict) -> list[dict]:
+    """Jobs whose (source, job_id) is not already in seen.json."""
+    seen = state["seen"]
+    return [j for j in jobs if seen_key(j) not in seen]
+
+
+def dedupe(new_jobs: list[dict]) -> tuple[list[dict], list[tuple[dict, str]]]:
+    """Collapse the same role appearing on two different boards.
+
+    Grouped on (company, title) and applied ONLY across different sources. A group that
+    lives entirely within one source is kept whole: a single board legitimately posts
+    "Software Engineer Intern" separately for two locations, and collapsing those would
+    hide a real job.
+
+    Returns (kept, [(dropped_job, winning_key), ...]).
+    """
+    groups: dict[tuple[str, str], list[tuple[int, dict]]] = {}
+    for index, job in enumerate(new_jobs):
+        groups.setdefault(dedupe_key(job), []).append((index, job))
+
+    kept: list[tuple[int, dict]] = []
+    dropped: list[tuple[dict, str]] = []
+
+    for group in groups.values():
+        sources = {job["source"] for _, job in group}
+        if len(sources) == 1:
+            kept.extend(group)
+            continue
+        best = min(sources, key=lambda s: (SOURCE_PRIORITY.get(s.split(":", 1)[0], 99), s))
+        winners = [(i, j) for i, j in group if j["source"] == best]
+        kept.extend(winners)
+        winning_key = seen_key(winners[0][1])
+        for _, job in group:
+            if job["source"] != best:
+                dropped.append((job, winning_key))
+
+    kept.sort(key=lambda pair: pair[0])          # preserve the original fetch order
+    return [job for _, job in kept], dropped
+
+
+# --------------------------------------------------------------------------------------
+# Health (section 9)
+# --------------------------------------------------------------------------------------
+
+
+def _source_health(state: dict, sid: str) -> dict:
+    return state["sources"].setdefault(sid, {
+        "consecutive_failures": 0,
+        "consecutive_zeros": 0,
+        "last_ok_run": None,
+        "last_failure_alert_run": None,
+        "last_zero_alert_run": None,
+    })
+
+
+def update_health(state: dict, results: list[handlers.FetchResult],
+                  run_counter: int) -> tuple[list[str], list[str]]:
+    """Update per-source counters and decide which alerts are due.
+
+    Only sources actually polled this run are touched. On the three runs in four where
+    Workday is skipped, its counters must not drift -- iterating over every configured
+    source instead of every result is an easy way to get that wrong.
+
+    Returns (broken, drifted) as lists of human-readable strings, aggregated by the caller
+    into a single push rather than one per source.
+    """
+    broken: list[str] = []
+    drifted: list[str] = []
+
+    for result in results:
+        health = _source_health(state, result.source)
+        health.update(result.state_updates)
+
+        if not result.ok:
+            health["consecutive_failures"] += 1
+            if (health["consecutive_failures"] >= FAILURE_ALERT_STREAK
+                    and _alert_due(health, "last_failure_alert_run", run_counter)):
+                health["last_failure_alert_run"] = run_counter
+                broken.append(f"{result.source} ({health['consecutive_failures']}x): {result.error}")
+            continue
+
+        health["consecutive_failures"] = 0
+        if result.jobs:
+            health["consecutive_zeros"] = 0
+            health["last_ok_run"] = run_counter
+            continue
+
+        health["consecutive_zeros"] += 1
+        # Section 9 says "a source that PREVIOUSLY RETURNED JOBS returns zero". A board
+        # that has never returned anything is a bad token or a legitimately empty board
+        # (section 5 says Attabotics may be one) -- the probe reports those, not a push
+        # every 30 minutes.
+        if health["last_ok_run"] is None:
+            continue
+        if (health["consecutive_zeros"] >= ZERO_ALERT_STREAK
+                and _alert_due(health, "last_zero_alert_run", run_counter)):
+            health["last_zero_alert_run"] = run_counter
+            drifted.append(f"{result.source} ({health['consecutive_zeros']} runs at zero)")
+
+    return broken, drifted
+
+
+def _alert_due(health: dict, field: str, run_counter: int) -> bool:
+    last = health.get(field)
+    return last is None or (run_counter - last) >= ALERT_COOLDOWN_RUNS
+
+
+# --------------------------------------------------------------------------------------
+# Probe
+# --------------------------------------------------------------------------------------
+
+
 def cmd_probe(sources: list[dict], ctx: FetchContext) -> int:
     """Hit every board once and print `source -> status, job count`.
 
@@ -65,16 +370,12 @@ def cmd_probe(sources: list[dict], ctx: FetchContext) -> int:
     duplicate the parsing logic and could therefore pass while the real handlers fail,
     which defeats the entire point of running it.
 
-    Sends nothing, writes no state. Never deletes a sources.json entry -- section 10 is
-    explicit that results get reported to the user instead.
+    Sends nothing, writes no state, and never deletes a sources.json entry.
     """
     print(f"{'source':40} {'status':>6} {'jobs':>6}  note")
     print("-" * 84)
 
-    live: list[handlers.FetchResult] = []
-    empty: list[handlers.FetchResult] = []
-    dead: list[tuple[handlers.FetchResult, dict]] = []
-    verified_broken: list[str] = []
+    live, empty, dead, verified_broken = [], [], [], []
 
     for cfg in sources:
         result = fetch_source(cfg, ctx)
@@ -83,7 +384,7 @@ def cmd_probe(sources: list[dict], ctx: FetchContext) -> int:
 
         if not result.ok:
             note_bits.append(f"DEAD: {result.error}")
-            dead.append((result, cfg))
+            dead.append(result)
         elif not result.jobs:
             note_bits.append("EMPTY")
             empty.append(result)
@@ -95,12 +396,11 @@ def cmd_probe(sources: list[dict], ctx: FetchContext) -> int:
         if cfg.get("status") == "verified" and (not result.ok or not result.jobs):
             verified_broken.append(result.source)
 
-        note = " ".join(b for b in note_bits if b)
-        print(f"{result.source:40} {status_txt:>6} {len(result.jobs):>6}  {note}")
+        print(f"{result.source:40} {status_txt:>6} {len(result.jobs):>6}  "
+              f"{' '.join(b for b in note_bits if b)}")
 
-    total = len(sources)
     print("-" * 84)
-    print(f"{total} sources: {len(live)} live, {len(empty)} empty, {len(dead)} dead")
+    print(f"{len(sources)} sources: {len(live)} live, {len(empty)} empty, {len(dead)} dead")
 
     if empty:
         print("\nEmpty boards (200 but zero postings -- may be legitimate):")
@@ -108,16 +408,206 @@ def cmd_probe(sources: list[dict], ctx: FetchContext) -> int:
             print(f"  {r.source}")
     if dead:
         print("\nDead boards (token drift or wrong host) -- REPORT, do not auto-delete:")
-        for r, cfg in dead:
+        for r in dead:
             print(f"  {r.source:40} {r.error}")
 
-    # A `verified` token that is broken means the spec's own verification has drifted, so
-    # the probe exits non-zero to make that impossible to miss in CI.
     if verified_broken:
-        print(f"\nFAIL: {len(verified_broken)} source(s) marked `verified` "
-              f"returned nothing: {', '.join(verified_broken)}")
+        print(f"\nFAIL: {len(verified_broken)} source(s) marked `verified` returned "
+              f"nothing: {', '.join(verified_broken)}")
         return 1
     return 0
+
+
+# --------------------------------------------------------------------------------------
+# The run loop
+# --------------------------------------------------------------------------------------
+
+
+def _log_line(result: handlers.FetchResult, new_count: int, health: dict) -> None:
+    """Section 9: one scannable line per source, per run."""
+    if not result.ok:
+        tag, status = "FAIL", "-"
+    elif not result.jobs:
+        tag, status = "warn", str(result.status)
+    else:
+        tag, status = "ok  ", str(result.status)
+
+    extra = ""
+    if not result.ok:
+        extra = f"  {result.error}"
+    elif not result.jobs and health.get("consecutive_zeros"):
+        extra = f"  (zero streak {health['consecutive_zeros']})"
+
+    log.info("[%s] %-34s %4s %5d jobs %4d new %5.1fs%s", tag, result.source, status,
+             len(result.jobs), new_count, result.elapsed_ms / 1000, extra)
+
+
+def run(args) -> int:
+    sources = select(load_sources(), args.source, args.ats)
+    by_source = {cfg["source_id"]: cfg for cfg in sources}
+
+    try:
+        state, is_bootstrap = load_state(args.state)
+    except StateCorrupt as exc:
+        log.error("STATE CORRUPT: %s", exc)
+        log.error("Not overwriting. Recover with: git checkout HEAD~1 -- %s", args.state)
+        if not args.dry_run:
+            notify.notify_alert("Job poller: state unreadable", str(exc))
+        return 2
+
+    run_counter = state["run_counter"] + 1
+    now = utcnow()
+    ctx = FetchContext(
+        session=build_session(),
+        jitter=not args.no_jitter,
+        state_hints=state["sources"],
+    )
+
+    if is_bootstrap:
+        log.info("BOOTSTRAP: no prior state, recording everything and sending nothing")
+
+    # 1-2. Fetch and normalize. fetch_source never raises, so one dead board cannot abort.
+    results = []
+    for cfg in sources:
+        if not should_poll(cfg["ats"], run_counter, args.force_workday):
+            log.info("[skip] %-34s (workday cadence: run %d)", cfg["source_id"], run_counter)
+            continue
+        results.append(fetch_source(cfg, ctx))
+
+    all_jobs = [job for r in results if r.ok for job in r.jobs]
+
+    # 3. Diff against seen BEFORE dedupe. Dropping a duplicate first would mean its job_id
+    #    never enters seen.json, so it gets re-evaluated forever -- and on any run where the
+    #    primary board fails, the secondary copy survives dedupe and fires a duplicate push
+    #    for a job notified weeks ago. This ordering is what closes that hole.
+    new_jobs = diff_new(all_jobs, state)
+
+    # 4. Dedupe across boards, before filtering: it avoids a content fetch on a copy that
+    #    is about to be discarded, and leaves the Greenhouse copy (the one with a
+    #    description body for the clearance check) as the survivor.
+    kept, dropped = dedupe(new_jobs)
+
+    broken, drifted = update_health(state, results, run_counter)
+
+    new_by_source: dict[str, int] = {}
+    for job in new_jobs:
+        new_by_source[job["source"]] = new_by_source.get(job["source"], 0) + 1
+    for result in results:
+        _log_line(result, new_by_source.get(result.source, 0), state["sources"].get(result.source, {}))
+
+    passed: list[dict] = []
+    rejected: list[tuple[dict, filters.Verdict]] = []
+
+    if is_bootstrap:
+        for job in new_jobs:
+            record_seen(state, job, "bootstrap", now=now)
+        log.info("BOOTSTRAP: recorded %d jobs across %d sources, 0 notifications sent",
+                 len(new_jobs), len(results))
+    else:
+        # 5. Filter. Title first; then, for Greenhouse survivors only, fetch the one
+        #    description body needed for the clearance check.
+        for job in kept:
+            verdict = filters.check_title(job["title"])
+            if not verdict.passed:
+                rejected.append((job, verdict))
+                continue
+
+            if job["ats"] == "greenhouse" and not job["content"]:
+                cfg = by_source.get(job["source"])
+                if cfg:
+                    job["content"] = greenhouse_fetch_content(cfg, job["job_id"], ctx)
+
+            clearance = filters.check_clearance(job["content"]) if job["content"] else None
+            if clearance is not None and not clearance.passed:
+                rejected.append((job, clearance))
+                continue
+            passed.append(job)
+
+        _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args)
+
+    # Section 9 alerts, aggregated: a network blip that breaks 20 boards sends one push.
+    if (broken or drifted) and not args.dry_run:
+        body = "\n".join(["Broken:", *broken] if broken else [])
+        if drifted:
+            body += ("\n" if body else "") + "\n".join(["Zero for several runs:", *drifted])
+        notify.notify_alert(f"Job poller: {len(broken) + len(drifted)} source(s) unhealthy", body)
+    for line in broken + drifted:
+        log.warning("UNHEALTHY %s", line)
+
+    state["run_counter"] = run_counter
+    state["last_run_at"] = now
+    if is_bootstrap:
+        state["bootstrapped_at"] = now
+
+    ok_count = sum(1 for r in results if r.ok)
+    log.info("run %d: %d/%d sources ok, %d total jobs, %d new, %d notified, %d rejected, "
+             "%d duplicate", run_counter, ok_count, len(results), len(all_jobs),
+             len(new_jobs), len(passed), len(rejected), len(dropped))
+
+    if args.dry_run:
+        log.info("--dry-run: state not written")
+        return 0
+
+    save_state(args.state, state)
+    return 0
+
+
+def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) -> None:
+    """Notify, then record. Ordering matters -- see below.
+
+    A job whose push FAILS is deliberately left out of seen.json so the next run retries
+    it. Recording first would mark it seen and silently swallow the posting, which is the
+    one outcome this tool exists to prevent.
+    """
+    for job, verdict in rejected:
+        record_seen(state, job, "rejected", reason=verdict.reason, now=now)
+    for job, winner in dropped:
+        record_seen(state, job, "duplicate", duplicate_of=winner, now=now)
+
+    for job in passed:
+        log.info("NEW  %s — %s  %s", job["company"], job["title"], job["url"])
+
+    if args.dry_run:
+        log.info("--dry-run: would notify %d job(s)", len(passed))
+        return
+    if not passed:
+        return
+
+    # Not in the spec. A run this large means the state file was lost or truncated, not
+    # that 200 internships opened at once -- so say that instead of sending 200 pushes.
+    if len(new_jobs) > ANOMALY_THRESHOLD:
+        log.error("ANOMALY: %d new jobs in one run; suppressing individual pushes",
+                  len(new_jobs))
+        notify.notify_alert(
+            "Job poller anomaly",
+            f"{len(new_jobs)} new jobs in one run ({len(passed)} would have notified). "
+            f"State may have been lost; check state/seen.json.",
+        )
+        for job in passed:
+            record_seen(state, job, "summarized", now=now)
+        return
+
+    if len(passed) > SUMMARY_THRESHOLD:
+        # Section 7: one summary instead of 9+ pushes. Full list already went to the log.
+        if notify.notify_summary(passed):
+            for job in passed:
+                record_seen(state, job, "summarized", now=now)
+        else:
+            log.error("summary push failed; %d job(s) stay unseen and retry next run",
+                      len(passed))
+        return
+
+    for job in passed:
+        if notify.notify_job(job):
+            record_seen(state, job, "notified", now=now)
+        else:
+            log.error("push failed for %s; it stays unseen and retries next run",
+                      seen_key(job))
+
+
+# --------------------------------------------------------------------------------------
+# CLI
+# --------------------------------------------------------------------------------------
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -129,6 +619,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--source", help="comma-separated source ids, e.g. greenhouse:vardaspace")
     p.add_argument("--ats", help="comma-separated ats types, e.g. lever,ashby")
     p.add_argument("--no-jitter", action="store_true", help="skip inter-request sleeps")
+    p.add_argument("--force-workday", action="store_true",
+                   help="poll Workday regardless of the every-4th-run cadence")
     p.add_argument("--state", type=pathlib.Path, default=STATE_PATH)
     p.add_argument("-v", "--verbose", action="store_true")
     return p
@@ -141,18 +633,16 @@ def main(argv: list[str] | None = None) -> int:
         format="%(message)s",
         stream=sys.stdout,
     )
-    # urllib3 logs every retry at WARNING. Section 9 wants one tidy line per source,
-    # and the retry noise buries it.
+    # urllib3 logs every retry at WARNING; section 9 wants one tidy line per source and
+    # the retry noise buries it.
     logging.getLogger("urllib3").setLevel(logging.ERROR)
 
-    sources = select(load_sources(), args.source, args.ats)
-    ctx = FetchContext(session=build_session(), jitter=not args.no_jitter)
-
     if args.probe:
+        sources = select(load_sources(), args.source, args.ats)
+        ctx = FetchContext(session=build_session(), jitter=not args.no_jitter)
         return cmd_probe(sources, ctx)
 
-    log.error("the run loop lands in build order step 4; use --probe for now")
-    return 1
+    return run(args)
 
 
 if __name__ == "__main__":
