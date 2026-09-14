@@ -605,6 +605,49 @@ def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) ->
                       seen_key(job))
 
 
+def cmd_list_open(sources: list[dict], ctx: FetchContext, path: pathlib.Path) -> int:
+    """Write every currently-open posting that passes the title filter to a markdown file.
+
+    Exists because the section 3 bootstrap is silent by design: it marks everything on
+    every board as seen and sends nothing, which is right (otherwise the first run fires
+    several hundred pushes) but leaves the whole existing backlog invisible. Notifications
+    only ever cover what appears AFTER the bootstrap, so this is how you see what is
+    already out there -- and re-running it is how the list stays current.
+
+    Read-only: no notifications, no state written.
+    """
+    rows: list[dict] = []
+    for cfg in sources:
+        result = fetch_source(cfg, ctx)
+        if not result.ok:
+            log.warning("[FAIL] %s: %s", result.source, result.error)
+            continue
+        rows.extend(j for j in result.jobs if filters.check_title(j["title"]).passed)
+
+    rows.sort(key=lambda j: (j["company"].casefold(), j["title"].casefold()))
+    companies = sorted({j["company"] for j in rows}, key=str.casefold)
+
+    lines = [
+        f"# Open SWE internships matching the filter ({len(rows)})",
+        "",
+        f"Generated {utcnow()} by `python poller.py --list-open`. Re-run it to refresh;",
+        "this is a point-in-time snapshot, not something the poller keeps up to date.",
+        "",
+        f"{len(rows)} roles across {len(companies)} companies.",
+    ]
+    current = None
+    for job in rows:
+        if job["company"] != current:
+            current = job["company"]
+            lines += ["", f"## {current}", ""]
+        where = f" — {job['location']}" if job["location"] else ""
+        lines.append(f"- [{job['title']}]({job['url']}){where}")
+
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    log.info("wrote %d roles across %d companies to %s", len(rows), len(companies), path)
+    return 0
+
+
 def cmd_test_notify() -> int:
     """Send one push and exit. Verifies the whole notification path end to end.
 
@@ -639,6 +682,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
                    help="run the full pipeline but send no pushes and write no state")
     p.add_argument("--source", help="comma-separated source ids, e.g. greenhouse:vardaspace")
     p.add_argument("--ats", help="comma-separated ats types, e.g. lever,ashby")
+    p.add_argument("--list-open", nargs="?", const="open-internships.md", metavar="PATH",
+                   help="write all currently-open matching roles to a markdown file and exit")
     p.add_argument("--test-notify", action="store_true",
                    help="send one test push and exit; verifies NTFY_TOPIC end to end")
     p.add_argument("--no-jitter", action="store_true", help="skip inter-request sleeps")
@@ -659,6 +704,11 @@ def main(argv: list[str] | None = None) -> int:
     # urllib3 logs every retry at WARNING; section 9 wants one tidy line per source and
     # the retry noise buries it.
     logging.getLogger("urllib3").setLevel(logging.ERROR)
+
+    if args.list_open:
+        sources = select(load_sources(), args.source, args.ats)
+        ctx = FetchContext(session=build_session(), jitter=not args.no_jitter)
+        return cmd_list_open(sources, ctx, pathlib.Path(args.list_open))
 
     if args.test_notify:
         return cmd_test_notify()
