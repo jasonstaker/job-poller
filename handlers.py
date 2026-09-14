@@ -63,6 +63,7 @@ ID_FIELDS: dict[str, tuple[str, ...]] = {
     "workday": ("tenant", "site"),
     "workable": ("subdomain",),
     "bamboohr": ("subdomain",),
+    "pinpoint": ("subdomain",),
 }
 
 # Present in sources.json but with no handler yet (build order step 9).
@@ -521,6 +522,186 @@ def fetch_workday(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
 
 
 # --------------------------------------------------------------------------------------
+# BambooHR
+# --------------------------------------------------------------------------------------
+
+
+def _bamboo_location(raw: dict) -> str:
+    """city/state, falling back to atsLocation, then to Remote.
+
+    Both location objects can be present-but-all-null, so this cannot just truthiness-check
+    the dict -- it has to look at the parts.
+    """
+    for key in ("location", "atsLocation"):
+        blob = raw.get(key) or {}
+        parts = [_clean(blob.get(f)) for f in ("city", "state", "province", "country")]
+        joined = ", ".join(p for p in parts if p)
+        if joined:
+            return joined + (" (Remote)" if raw.get("isRemote") else "")
+    return "Remote" if raw.get("isRemote") else ""
+
+
+def fetch_bamboohr(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
+    """GET /careers/list -- a `result` array (section 4.6).
+
+    The payload carries NO url of any kind, so the apply link is constructed. Verified live
+    2026-09-14 that https://{subdomain}.bamboohr.com/careers/{id} returns 200.
+
+    employmentType is ignored for the same reason Lever commitment is: companies mislabel
+    it, and the title filter is the real gate.
+    """
+    sub = cfg["subdomain"]
+    resp = http_request("GET", f"https://{sub}.bamboohr.com/careers/list", ctx=ctx)
+    resp.raise_for_status()
+
+    payload = resp.json()
+    result = payload.get("result")
+    if result is None:
+        result = []
+    if not isinstance(result, list):
+        raise ValueError(f"bamboohr {sub}: expected `result` to be an array, "
+                         f"got {type(result).__name__}")
+
+    jobs = []
+    for raw in result:
+        job_id = _clean(raw.get("id"))
+        if not job_id:
+            continue
+        jobs.append(
+            normalize_job(
+                cfg,
+                job_id=job_id,
+                title=raw.get("jobOpeningName"),
+                url=raw.get("jobOpeningShareUrl")
+                    or f"https://{sub}.bamboohr.com/careers/{job_id}",
+                location=_bamboo_location(raw),
+                department=raw.get("departmentLabel"),
+            )
+        )
+    return resp.status_code, jobs
+
+
+# --------------------------------------------------------------------------------------
+# Pinpoint
+# --------------------------------------------------------------------------------------
+
+
+def _pinpoint_location(raw: dict) -> str:
+    """The field is a dict on Impulse but may be a plain string elsewhere."""
+    loc = raw.get("location")
+    if isinstance(loc, str):
+        return _clean(loc)
+    if not isinstance(loc, dict):
+        return ""
+    parts = [_clean(loc.get(f)) for f in ("city", "province", "country")]
+    joined = ", ".join(p for p in parts if p)
+    return joined or _clean(loc.get("name"))
+
+
+def fetch_pinpoint(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
+    """GET /postings.json.
+
+    Section 4.7 files Impulse Space under scrape sources, but it is not a scrape at all --
+    this is a clean JSON board API that nobody had checked. Note the payload key is `data`,
+    not `jobs`.
+
+    Descriptions ship inline, so unlike Lever/Ashby/Workday these jobs get the section 6
+    clearance check for free -- which matters for a US space company.
+    """
+    sub = cfg["subdomain"]
+    resp = http_request("GET", f"https://{sub}.pinpointhq.com/postings.json", ctx=ctx)
+    resp.raise_for_status()
+
+    payload = resp.json()
+    data = payload.get("data")
+    if data is None:
+        data = []
+    if not isinstance(data, list):
+        raise ValueError(f"pinpoint {sub}: expected `data` to be an array, "
+                         f"got {type(data).__name__}")
+
+    jobs = []
+    for raw in data:
+        job_id = _clean(raw.get("id"))
+        if not job_id:
+            continue
+        url = _clean(raw.get("url"))
+        if url and not url.startswith("http"):
+            url = f"https://{sub}.pinpointhq.com/{url.lstrip('/')}"
+        jobs.append(
+            normalize_job(
+                cfg,
+                job_id=job_id,
+                title=raw.get("title"),
+                url=url,
+                location=_pinpoint_location(raw),
+                department=(raw.get("department") or {}).get("name")
+                           if isinstance(raw.get("department"), dict)
+                           else raw.get("department"),
+                posted_at=_clean(raw.get("published_at") or raw.get("created_at")),
+                content=raw.get("description") or "",
+            )
+        )
+    return resp.status_code, jobs
+
+
+# --------------------------------------------------------------------------------------
+# Workable
+# --------------------------------------------------------------------------------------
+
+
+def fetch_workable(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
+    """POST /api/v3/accounts/{subdomain}/jobs -- a `results` array.
+
+    Section 4.5 documents this path as a GET, which is why it 404s: the path is right, the
+    METHOD is wrong. Verified live 2026-09-14 that the same url answers 200 to a POST with
+    an empty JSON body.
+
+    The payload carries no apply url, so it is constructed from `shortcode`; verified that
+    https://apply.workable.com/{subdomain}/j/{shortcode}/ returns 200. shortcode is
+    preferred over the numeric id for the same reason Workday uses externalPath: it is the
+    url, so id and link can never disagree.
+    """
+    sub = cfg["subdomain"]
+    resp = http_request(
+        "POST", f"https://apply.workable.com/api/v3/accounts/{sub}/jobs",
+        ctx=ctx, json_body={}, headers={"Content-Type": "application/json"},
+    )
+    resp.raise_for_status()
+
+    payload = resp.json()
+    results = payload.get("results")
+    if results is None:
+        results = []
+    if not isinstance(results, list):
+        raise ValueError(f"workable {sub}: expected `results` to be an array, "
+                         f"got {type(results).__name__}")
+
+    jobs = []
+    for raw in results:
+        job_id = _clean(raw.get("shortcode") or raw.get("id"))
+        if not job_id:
+            continue
+        location = raw.get("location") or {}
+        # department is a LIST here, unlike every other ATS.
+        dept = raw.get("department")
+        if isinstance(dept, list):
+            dept = "; ".join(_clean(d) for d in dept if d)
+        jobs.append(
+            normalize_job(
+                cfg,
+                job_id=job_id,
+                title=raw.get("title"),
+                url=f"https://apply.workable.com/{sub}/j/{job_id}/",
+                location=location.get("display") if isinstance(location, dict) else location,
+                department=dept,
+                posted_at=_clean(raw.get("published")),
+            )
+        )
+    return resp.status_code, jobs
+
+
+# --------------------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------------------
 
@@ -531,6 +712,9 @@ HANDLERS: dict[str, Handler] = {
     "lever": fetch_lever,
     "ashby": fetch_ashby,
     "workday": fetch_workday,
+    "bamboohr": fetch_bamboohr,
+    "pinpoint": fetch_pinpoint,
+    "workable": fetch_workable,
 }
 
 

@@ -355,11 +355,6 @@
       "note": "Paylocity, JS-rendered"
     },
     {
-      "company": "Impulse Space",
-      "method": "html",
-      "note": "Pinpoint; try impulsespace.pinpointhq.com/postings.json first"
-    },
-    {
       "company": "NordSpace",
       "method": "html"
     },
@@ -370,6 +365,14 @@
     {
       "company": "Canadensys",
       "method": "html"
+    }
+  ],
+  "pinpoint": [
+    {
+      "company": "Impulse Space",
+      "subdomain": "impulsespace",
+      "status": "verified",
+      "note": "2026-09-14 probe: section 4.7 filed this under scrape sources, but impulsespace.pinpointhq.com/postings.json is a clean JSON API (187 postings)"
     }
   ]
 }
