@@ -45,13 +45,15 @@ ZERO_ALERT_STREAK = 5
 # Section 9 taken literally would re-alert every 30 minutes forever on a permanently dead
 # board. Fire at the threshold, then at most once a day (48 runs at the */30 cadence).
 ALERT_COOLDOWN_RUNS = 48
-# Section 8: Workday throttles harder, so poll it every 4th run (~2 hours).
-WORKDAY_EVERY_N_RUNS = 4
+# Section 8 says poll Workday every 4th run because it throttles harder. That assumed the
+# */30 cron; GitHub actually delivers roughly one run every 3.5 hours, which would leave
+# Workday ~14 hours stale -- and Workday holds NVIDIA's 27 matching roles. ~180 rapid probe
+# requests on 2026-09-14 drew no throttling at all, so every source is polled every run.
 
 # Which board wins when the same role appears on two of them. Greenhouse first because it
 # is the only ATS that exposes a description body for the clearance check.
 SOURCE_PRIORITY = {"greenhouse": 0, "ashby": 1, "lever": 2,
-                   "workday": 3, "workable": 4, "bamboohr": 5}
+                   "workday": 3, "workable": 4, "bamboohr": 5, "pinpoint": 6}
 
 log = logging.getLogger("poller")
 
@@ -107,10 +109,12 @@ def select(sources: list[dict], only: str | None, ats: str | None) -> list[dict]
 
 
 def should_poll(ats: str, run_counter: int, force_workday: bool = False) -> bool:
-    """Section 8: everything every run, except Workday every 4th."""
-    if ats != "workday" or force_workday:
-        return True
-    return run_counter % WORKDAY_EVERY_N_RUNS == 0
+    """Every source, every run -- see the note on the Workday cadence above.
+
+    Kept as a function rather than inlined so a future per-ATS cadence has somewhere to go,
+    and so the existing call site and tests stay meaningful.
+    """
+    return True
 
 
 # --------------------------------------------------------------------------------------
@@ -478,8 +482,8 @@ def run(args) -> int:
     # 1-2. Fetch and normalize. fetch_source never raises, so one dead board cannot abort.
     results = []
     for cfg in sources:
-        if not should_poll(cfg["ats"], run_counter, args.force_workday):
-            log.info("[skip] %-34s (workday cadence: run %d)", cfg["source_id"], run_counter)
+        if not should_poll(cfg["ats"], run_counter):
+            log.info("[skip] %-34s (cadence: run %d)", cfg["source_id"], run_counter)
             continue
         results.append(fetch_source(cfg, ctx))
 
@@ -736,8 +740,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--test-notify", action="store_true",
                    help="send one test push and exit; verifies NTFY_TOPIC end to end")
     p.add_argument("--no-jitter", action="store_true", help="skip inter-request sleeps")
-    p.add_argument("--force-workday", action="store_true",
-                   help="poll Workday regardless of the every-4th-run cadence")
     p.add_argument("--state", type=pathlib.Path, default=STATE_PATH)
     p.add_argument("-v", "--verbose", action="store_true")
     return p

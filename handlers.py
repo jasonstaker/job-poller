@@ -33,6 +33,27 @@ GREENHOUSE_HOSTS = {
     "eu": "https://boards-api.eu.greenhouse.io",
 }
 
+# --- Workday -------------------------------------------------------------------------
+# MEASURED 2026-09-14 against all six tenants; each constant records the evidence.
+
+# limit > 20 returns ZERO postings and total=null -- it does not clamp. Section 4.4's
+# "max 20 per page" is exact, not advisory.
+WORKDAY_PAGE_SIZE = 20
+
+# searchText is a FULL-TEXT search over descriptions, not titles. "intern" narrows Blue
+# Origin 1632->477 and NVIDIA 2000->1019, and against full-board enumeration it misses
+# ZERO title-filter-passing roles (10/10 Blue Origin, 3/3 Cadence) for a third of the
+# requests. Do not add "co-op" as a second pass: it matches every posting on the board.
+WORKDAY_SEARCH_TEXT = "intern"
+
+# Runaway guard only. NVIDIA, the largest measured board, needs 51 pages -- never tune
+# this below that or NVIDIA silently truncates.
+WORKDAY_MAX_PAGES = 120
+
+# How far short of `total` a board may land before it looks like the pagination bug rather
+# than ordinary churn. Absolute, not a ratio, so small boards (Wisk has 3) never trip it.
+WORKDAY_SHORTFALL_TOLERANCE = 5
+
 # Which sources.json field carries the board identifier, per ATS. The spec uses a
 # different key name for each, so this is the one place that difference is resolved.
 ID_FIELDS: dict[str, tuple[str, ...]] = {
@@ -387,6 +408,119 @@ def fetch_ashby(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
 
 
 # --------------------------------------------------------------------------------------
+# Workday
+# --------------------------------------------------------------------------------------
+
+
+def _workday_host(cfg: dict) -> str:
+    return f"https://{cfg['tenant']}.{cfg['dc']}.myworkdayjobs.com"
+
+
+def _workday_parse(cfg: dict, postings: list[dict]) -> list[dict]:
+    base = f"{_workday_host(cfg)}/en-US/{cfg['site']}"
+    jobs = []
+    for raw in postings:
+        # externalPath over bulletFields[0] as the id. Both are stable, but externalPath is
+        # a schema field rather than a display array, and it IS the url -- so id and link
+        # can never disagree. Wisk proves it survives a retitle: a posting titled "Sr. Staff
+        # Software Development Engineer" still has externalPath
+        # ".../Avionics-Software-Architect_JR100285".
+        path = _clean(raw.get("externalPath"))
+        bullets = raw.get("bulletFields") or []
+        job_id = path or _clean(bullets[0] if bullets else "")
+        if not job_id:
+            # MEASURED: 2 of NVIDIA's 1019 postings carry no title, externalPath,
+            # locationsText or postedOn at all. Skip them -- deriving an id from the title
+            # would re-notify on every title edit, the one thing this must never do.
+            log.debug("%s: skipping a posting with no externalPath or bulletFields",
+                      cfg["source_id"])
+            continue
+        jobs.append(
+            normalize_job(
+                cfg,
+                job_id=job_id,
+                title=raw.get("title"),
+                url=base + "/" + path.lstrip("/") if path else base,
+                # Verbatim, including the literal "2 Locations" that CAE returns.
+                # location is display-only: nothing filters or dedupes on it, and blanking
+                # it would throw away the fact that the role is multi-site.
+                location=raw.get("locationsText"),
+                # Prose ("Posted 3 Days Ago"), not a date, and Boston Dynamics omits it
+                # entirely. Nothing consumes posted_at, so store it and do not parse it.
+                posted_at=_clean(raw.get("postedOn")),
+            )
+        )
+    return jobs
+
+
+def fetch_workday(cfg: dict, ctx: FetchContext) -> tuple[int, list[dict]]:
+    """POST /wday/cxs/{tenant}/{site}/jobs, paginated.
+
+    The one thing to get right here: **`total` is returned only on the FIRST page.** Every
+    page after offset=0 reports `total: 0`. Section 4.4 says "increment offset by limit
+    until offset >= total", which read as a per-page instruction truncates every board to
+    40 jobs -- with a 200, no exception, and a plausible-looking log line. Blue Origin
+    would yield 40 of 1632.
+
+    Section 4.4 also says a browser User-Agent and JSON headers are required or Workday
+    404s. MEASURED 2026-09-14: not true for any of the six tenants -- all six return
+    identical results with the plain descriptive UA, and Blue Origin and NVIDIA answer even
+    with requests' default UA and no JSON headers. So no browser spoofing; section 8's
+    descriptive-UA rule is honoured literally. The JSON headers are still sent explicitly,
+    as cheap insurance for a tenant that might enforce them.
+    """
+    url = f"{_workday_host(cfg)}/wday/cxs/{cfg['tenant']}/{cfg['site']}/jobs"
+    jobs: list[dict] = []
+    offset = 0
+    page = 0
+    total: int | None = None
+    status = 0
+
+    while True:
+        resp = http_request(
+            "POST", url, ctx=ctx,
+            json_body={"appliedFacets": {}, "limit": WORKDAY_PAGE_SIZE,
+                       "offset": offset, "searchText": WORKDAY_SEARCH_TEXT},
+            headers={"Content-Type": "application/json"},
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        page += 1
+        if page == 1:
+            # Positional, NOT `if total is None`. If page 1 ever omits the key, the `is
+            # None` form latches page 2's total:0 and truncates the board to 40.
+            status = resp.status_code
+            total = payload.get("total")
+
+        postings = payload.get("jobPostings") or []
+        if not postings:
+            # The real terminator -- true for every board regardless of what total says,
+            # and what makes a missing total safe.
+            break
+
+        jobs.extend(_workday_parse(cfg, postings))
+        offset += WORKDAY_PAGE_SIZE
+        # offset >= total, not len(jobs) >= total: a short-but-nonempty page (or a skipped
+        # malformed posting) would make the len form loop forever.
+        if total and offset >= total:
+            break
+        if page >= WORKDAY_MAX_PAGES:
+            log.warning("%s: hit the %d page cap at %d jobs; board may be truncated",
+                        cfg["source_id"], WORKDAY_MAX_PAGES, len(jobs))
+            break
+
+    if total and page < WORKDAY_MAX_PAGES and len(jobs) < total - WORKDAY_SHORTFALL_TOLERANCE:
+        # The operational tripwire for the total-only-on-page-1 bug. Warn, never raise: a
+        # board that drops one posting mid-pagination is normal churn and must not cost the
+        # other 476.
+        log.warning("%s: collected %d of %d -- pagination may be truncated",
+                    cfg["source_id"], len(jobs), total)
+
+    cfg["_pages"] = page
+    return status, jobs
+
+
+# --------------------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------------------
 
@@ -396,6 +530,7 @@ HANDLERS: dict[str, Handler] = {
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
     "ashby": fetch_ashby,
+    "workday": fetch_workday,
 }
 
 

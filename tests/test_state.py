@@ -349,20 +349,16 @@ def test_state_updates_are_persisted():
 # --------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("ats", ["greenhouse", "lever", "ashby"])
+@pytest.mark.parametrize("ats", ["greenhouse", "lever", "ashby", "workday"])
 @pytest.mark.parametrize("run", [1, 2, 3, 4])
-def test_non_workday_polls_every_run(ats, run):
+def test_every_source_polls_every_run(ats, run):
+    """Section 8's every-4th-run Workday cadence assumed */30.
+
+    GitHub actually delivers ~1 run per 3.5h, which would leave Workday ~14h stale while it
+    holds NVIDIA's 27 matching roles. Probing drew no throttling, so everything polls every
+    run -- which also removes any chance of health counters drifting on skipped sources.
+    """
     assert should_poll(ats, run)
-
-
-@pytest.mark.parametrize("run,expected", [(1, False), (2, False), (3, False), (4, True),
-                                          (5, False), (8, True), (12, True)])
-def test_workday_polls_every_fourth_run(run, expected):
-    assert should_poll("workday", run) is expected
-
-
-def test_force_workday_overrides_the_cadence():
-    assert should_poll("workday", 1, force_workday=True)
 
 
 # --------------------------------------------------------------------------------------
