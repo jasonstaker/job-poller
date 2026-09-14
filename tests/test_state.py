@@ -398,3 +398,136 @@ def test_source_ids_are_unique():
 def test_no_source_id_contains_the_key_separator():
     """seen.json keys are "{source}::{job_id}"; a "::" in a source id would break parsing."""
     assert all("::" not in c["source_id"] for c in poller.load_sources())
+
+
+# --------------------------------------------------------------------------------------
+# Per-source backfill
+# --------------------------------------------------------------------------------------
+
+
+class Args:
+    """Minimal stand-in for the argparse namespace `run()` consumes."""
+
+    def __init__(self, state, **kw):
+        self.state = state
+        self.source = self.ats = None
+        self.dry_run = self.no_jitter = self.verbose = False
+        self.force_workday = True
+        self.probe = self.test_notify = False
+        self.list_open = None
+        self.__dict__.update(kw)
+
+
+def _seeded_state(tmp_path, sources):
+    """A non-bootstrap state that already knows about `sources`."""
+    p = tmp_path / "seen.json"
+    st = new_state()
+    st["bootstrapped_at"] = "2026-09-12T00:00:00Z"
+    st["run_counter"] = 10
+    for sid in sources:
+        st["sources"][sid] = {
+            "consecutive_failures": 0, "consecutive_zeros": 0, "last_ok_run": 10,
+            "last_failure_alert_run": None, "last_zero_alert_run": None,
+        }
+    save_state(p, st)
+    return p
+
+
+def _run_with(monkeypatch, tmp_path, state_path, jobs_by_source, cfgs):
+    """Drive poller.run() with a stubbed fetch and a recording notifier."""
+    sent = []
+    monkeypatch.setattr(poller, "load_sources", lambda *a, **k: cfgs)
+    monkeypatch.setattr(poller, "build_session", lambda: object())
+    monkeypatch.setattr(poller, "fetch_source",
+                        lambda cfg, ctx: result(cfg["source_id"],
+                                                jobs=jobs_by_source.get(cfg["source_id"], [])))
+    monkeypatch.setattr(poller.notify, "notify_job", lambda j, **k: sent.append(j) or True)
+    monkeypatch.setattr(poller.notify, "notify_summary", lambda js, **k: sent.extend(js) or True)
+    monkeypatch.setattr(poller.notify, "notify_alert", lambda *a, **k: True)
+    rc = poller.run(Args(state_path))
+    return rc, sent
+
+
+GH_CFG = {"ats": "greenhouse", "token": "vardaspace", "company": "Varda Space",
+          "source_id": "greenhouse:vardaspace"}
+WD_CFG = {"ats": "workday", "tenant": "blueorigin", "site": "BlueOrigin", "dc": "wd5",
+          "company": "Blue Origin", "source_id": "workday:blueorigin:BlueOrigin"}
+
+
+def test_new_source_is_backfilled_not_notified(tmp_path, monkeypatch):
+    """Registering a handler must not fire a push for every job already on its board."""
+    p = _seeded_state(tmp_path, ["greenhouse:vardaspace"])
+    wd_jobs = [job(source="workday:blueorigin:BlueOrigin", job_id=str(i),
+                   title="Software Engineer Intern", company="Blue Origin")
+               for i in range(30)]
+    rc, sent = _run_with(monkeypatch, tmp_path, p,
+                         {"greenhouse:vardaspace": [], "workday:blueorigin:BlueOrigin": wd_jobs},
+                         [GH_CFG, WD_CFG])
+
+    assert rc == 0
+    assert sent == [], "a brand-new board must send nothing"
+    final, _ = load_state(p)
+    outcomes = {v["outcome"] for k, v in final["seen"].items() if k.startswith("workday:")}
+    assert outcomes == {"backfill"}
+    assert len(final["seen"]) == 30
+
+
+def test_backfill_does_not_trip_the_anomaly_guard(tmp_path, monkeypatch, caplog):
+    """250 jobs from a new board is onboarding, not 'state may have been lost'."""
+    p = _seeded_state(tmp_path, ["greenhouse:vardaspace"])
+    wd_jobs = [job(source="workday:blueorigin:BlueOrigin", job_id=str(i),
+                   title=f"Engineer {i}", company="Blue Origin") for i in range(250)]
+    with caplog.at_level("INFO"):
+        rc, sent = _run_with(monkeypatch, tmp_path, p,
+                             {"greenhouse:vardaspace": [],
+                              "workday:blueorigin:BlueOrigin": wd_jobs},
+                             [GH_CFG, WD_CFG])
+    assert rc == 0 and sent == []
+    assert "ANOMALY" not in caplog.text
+    assert "BACKFILL" in caplog.text
+
+
+def test_established_source_still_notifies_during_someone_elses_backfill(tmp_path, monkeypatch):
+    """The guard that matters: backfill must not swallow a real notification."""
+    p = _seeded_state(tmp_path, ["greenhouse:vardaspace"])
+    gh_jobs = [job(source="greenhouse:vardaspace", job_id="new1",
+                   title="Software Engineer Intern, Summer 2027", company="Varda Space")]
+    wd_jobs = [job(source="workday:blueorigin:BlueOrigin", job_id=str(i),
+                   title="Software Engineer Intern", company="Blue Origin")
+               for i in range(30)]
+    rc, sent = _run_with(monkeypatch, tmp_path, p,
+                         {"greenhouse:vardaspace": gh_jobs,
+                          "workday:blueorigin:BlueOrigin": wd_jobs},
+                         [GH_CFG, WD_CFG])
+
+    assert [j["job_id"] for j in sent] == ["new1"], "the established board must still push"
+    final, _ = load_state(p)
+    assert final["seen"]["greenhouse:vardaspace::new1"]["outcome"] == "notified"
+
+
+def test_second_run_of_a_backfilled_source_notifies_normally(tmp_path, monkeypatch):
+    """Backfill is once per source, not a permanent mute."""
+    p = _seeded_state(tmp_path, ["greenhouse:vardaspace"])
+    first = [job(source="workday:blueorigin:BlueOrigin", job_id="old",
+                 title="Software Engineer Intern", company="Blue Origin")]
+    _run_with(monkeypatch, tmp_path, p,
+              {"greenhouse:vardaspace": [], "workday:blueorigin:BlueOrigin": first},
+              [GH_CFG, WD_CFG])
+
+    second = first + [job(source="workday:blueorigin:BlueOrigin", job_id="brand-new",
+                          title="Software Engineer Intern, Summer 2027", company="Blue Origin")]
+    _, sent = _run_with(monkeypatch, tmp_path, p,
+                        {"greenhouse:vardaspace": [], "workday:blueorigin:BlueOrigin": second},
+                        [GH_CFG, WD_CFG])
+    assert [j["job_id"] for j in sent] == ["brand-new"]
+
+
+def test_bootstrap_still_takes_precedence_over_backfill(tmp_path, monkeypatch):
+    """On a true first run everything is 'bootstrap', not 'backfill'."""
+    p = tmp_path / "seen.json"
+    jobs = [job(source="greenhouse:vardaspace", job_id="1",
+                title="Software Engineer Intern", company="Varda Space")]
+    rc, sent = _run_with(monkeypatch, tmp_path, p, {"greenhouse:vardaspace": jobs}, [GH_CFG])
+    assert rc == 0 and sent == []
+    final, _ = load_state(p)
+    assert {v["outcome"] for v in final["seen"].values()} == {"bootstrap"}

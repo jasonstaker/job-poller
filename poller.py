@@ -459,6 +459,11 @@ def run(args) -> int:
             notify.notify_alert("Job poller: state unreadable", str(exc))
         return 2
 
+    # Captured BEFORE update_health, which setdefaults an entry for every polled source.
+    # A source absent here has never been polled, so everything on its board is history
+    # rather than news -- see the backfill split below.
+    known_sources = set(state["sources"])
+
     run_counter = state["run_counter"] + 1
     now = utcnow()
     ctx = FetchContext(
@@ -486,10 +491,24 @@ def run(args) -> int:
     #    for a job notified weeks ago. This ordering is what closes that hole.
     new_jobs = diff_new(all_jobs, state)
 
+    # 3b. Split off boards being polled for the very first time. Registering a new handler
+    #     makes every job on its boards "new" at once -- adding Workday alone produces
+    #     ~1,800. Without this they would trip ANOMALY_THRESHOLD and fire a "state may have
+    #     been lost" alert, which is safe but false, and which hides every matching role.
+    #     This is section 3's first-run bootstrap logic applied per source instead of per
+    #     repo, and it makes every future handler addition a non-event.
+    backfill_jobs: list[dict] = []
+    fresh_jobs = new_jobs
+    if not is_bootstrap:
+        backfill_jobs = [j for j in new_jobs if j["source"] not in known_sources]
+        fresh_jobs = [j for j in new_jobs if j["source"] in known_sources]
+
     # 4. Dedupe across boards, before filtering: it avoids a content fetch on a copy that
     #    is about to be discarded, and leaves the Greenhouse copy (the one with a
     #    description body for the clearance check) as the survivor.
-    kept, dropped = dedupe(new_jobs)
+    #    Backfilled jobs are excluded -- they never notify, so a dedupe decision about them
+    #    could only suppress a real notification from an established board.
+    kept, dropped = dedupe(fresh_jobs)
 
     broken, drifted = update_health(state, results, run_counter)
 
@@ -508,6 +527,9 @@ def run(args) -> int:
         log.info("BOOTSTRAP: recorded %d jobs across %d sources, 0 notifications sent",
                  len(new_jobs), len(results))
     else:
+        if backfill_jobs:
+            _record_backfill(state, backfill_jobs, now)
+
         # 5. Filter. Title first; then, for Greenhouse survivors only, fetch the one
         #    description body needed for the clearance check.
         for job in kept:
@@ -527,7 +549,7 @@ def run(args) -> int:
                 continue
             passed.append(job)
 
-        _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args)
+        _notify_and_record(state, passed, rejected, dropped, fresh_jobs, now, args)
 
     # Section 9 alerts, aggregated: a network blip that breaks 20 boards sends one push.
     if (broken or drifted) and not args.dry_run:
@@ -554,6 +576,29 @@ def run(args) -> int:
 
     save_state(args.state, state)
     return 0
+
+
+def _record_backfill(state: dict, jobs: list[dict], now: str) -> None:
+    """Absorb a never-before-polled board into state without notifying.
+
+    Logs the roles that WOULD have matched, because the whole point of adding a source is
+    those roles -- silently swallowing them is what the first-run bootstrap got wrong until
+    `--list-open` was added. Re-run `poller.py --list-open` afterwards for the full list.
+    """
+    by_source: dict[str, int] = {}
+    for job in jobs:
+        record_seen(state, job, "backfill", now=now)
+        by_source[job["source"]] = by_source.get(job["source"], 0) + 1
+
+    matching = [j for j in jobs if filters.check_title(j["title"]).passed]
+    log.info("BACKFILL: %d job(s) from %d new source(s), 0 notifications sent",
+             len(jobs), len(by_source))
+    for sid, count in sorted(by_source.items()):
+        log.info("  backfilled %-34s %5d jobs", sid, count)
+    if matching:
+        log.info("  %d of them match the filter (run --list-open for links):", len(matching))
+        for job in matching:
+            log.info("    %s - %s", job["company"], job["title"])
 
 
 def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) -> None:
