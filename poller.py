@@ -437,6 +437,10 @@ def _log_line(result: handlers.FetchResult, new_count: int, health: dict) -> Non
         extra = f"  {result.error}"
     elif not result.jobs and health.get("consecutive_zeros"):
         extra = f"  (zero streak {health['consecutive_zeros']})"
+    if result.pages > 1:
+        # Cheapest possible tripwire for the Workday `total`-only-on-page-1 quirk: a
+        # paginated board that suddenly reports 2p instead of 24p has been truncated.
+        extra += f"  {result.pages}p"
 
     log.info("[%s] %-34s %4s %5d jobs %4d new %5.1fs%s", tag, result.source, status,
              len(result.jobs), new_count, result.elapsed_ms / 1000, extra)

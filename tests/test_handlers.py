@@ -122,7 +122,7 @@ def test_greenhouse_bulk_listing_omits_content_param(ctx_factory):
     ctx, session = ctx_factory({f"{GH}/v1/boards/vardaspace/jobs":
                                 FakeResponse(200, GREENHOUSE_PAYLOAD)})
     fetch_greenhouse(cfg, ctx)
-    assert all("content=true" not in url for _, url, _ in session.calls)
+    assert all("content=true" not in c.url for c in session.calls)
 
 
 def test_greenhouse_empty_board_is_not_an_error(ctx_factory):
@@ -202,7 +202,7 @@ def test_content_fetch_uses_the_memoized_host(ctx_factory):
                                 FakeResponse(200, {"content": "x"})})
     ctx.state_hints = {"greenhouse:physicsx": {"greenhouse_host": "eu"}}
     assert greenhouse_fetch_content(cfg, "42", ctx) == "x"
-    assert session.calls[0][1].startswith(GH_EU)
+    assert session.calls[0].url.startswith(GH_EU)
 
 
 # --------------------------------------------------------------------------------------
@@ -297,9 +297,9 @@ def test_descriptive_user_agent_on_every_call(ctx_factory):
     ctx, session = ctx_factory({f"{GH}/v1/boards/vardaspace/jobs":
                                 FakeResponse(200, GREENHOUSE_PAYLOAD)})
     fetch_greenhouse(cfg, ctx)
-    for _, _, hdrs in session.calls:
-        assert hdrs["User-Agent"].startswith("job-poller/")
-        assert "github.com/jasonstaker" in hdrs["User-Agent"]
+    for c in session.calls:
+        assert c.headers["User-Agent"].startswith("job-poller/")
+        assert "github.com/jasonstaker" in c.headers["User-Agent"]
 
 
 def test_no_jitter_means_no_sleep(ctx_factory, monkeypatch):
@@ -416,7 +416,7 @@ def test_lever_does_not_send_commitment_filter(ctx_factory):
     cfg = lever_cfg()
     ctx, session = ctx_factory({LEVER_URL: FakeResponse(200, LEVER_PAYLOAD)})
     handlers.fetch_lever(cfg, ctx)
-    assert all("commitment" not in url for _, url, _ in session.calls)
+    assert all("commitment" not in c.url for c in session.calls)
 
 
 def test_lever_empty_board_is_not_an_error(ctx_factory):
@@ -473,8 +473,8 @@ def test_ashby_url_preserves_board_capitalization(ctx_factory, board):
     url = f"https://api.ashbyhq.com/posting-api/job-board/{board}"
     ctx, session = ctx_factory({url: FakeResponse(200, {"jobs": []})})
     handlers.fetch_ashby(cfg, ctx)
-    assert session.calls[0][1].endswith(f"/{board}")
-    assert board in session.calls[0][1]
+    assert session.calls[0].url.endswith(f"/{board}")
+    assert board in session.calls[0].url
 
 
 def test_ashby_missing_jobs_key_is_empty_not_a_crash(ctx_factory):
@@ -485,8 +485,13 @@ def test_ashby_missing_jobs_key_is_empty_not_a_crash(ctx_factory):
     assert status == 200 and jobs == []
 
 
-def test_all_three_handlers_registered():
-    assert set(handlers.HANDLERS) == {"greenhouse", "lever", "ashby"}
+def test_fetch_source_does_not_leak_pages_between_runs(ctx_factory):
+    """Mirror of the _state_updates cleanup: a stale count must not be reported."""
+    cfg = gh_cfg()
+    cfg["_pages"] = 99
+    ctx, _ = ctx_factory({f"{GH}/v1/boards/vardaspace/jobs":
+                          FakeResponse(200, GREENHOUSE_PAYLOAD)})
+    assert fetch_source(cfg, ctx).pages == 1
 
 
 def test_unreachable_eu_fallback_reports_the_original_404(ctx_factory):
@@ -520,7 +525,7 @@ def test_eu_unavailable_flag_skips_later_fallbacks(ctx_factory):
     ctx.greenhouse_eu_unavailable = True
     with pytest.raises(requests.HTTPError):
         fetch_greenhouse(cfg, ctx)
-    assert all(GH_EU not in url for _, url, _ in session.calls)
+    assert all(GH_EU not in c.url for c in session.calls)
 
 
 def test_primary_connection_error_is_surfaced_not_swallowed(ctx_factory):

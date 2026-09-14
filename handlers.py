@@ -409,6 +409,7 @@ def fetch_source(cfg: dict, ctx: FetchContext) -> FetchResult:
     company = cfg.get("company", "")
     started = time.monotonic()
     cfg.pop("_state_updates", None)
+    cfg.pop("_pages", None)
 
     def elapsed() -> int:
         return int((time.monotonic() - started) * 1000)

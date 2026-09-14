@@ -4,12 +4,27 @@ from __future__ import annotations
 
 import json
 import pathlib
+from typing import NamedTuple
 
 import pytest
 
 import handlers
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
+
+
+class Call(NamedTuple):
+    """One recorded request.
+
+    `body` matters because Workday sends the SAME url for every page and carries `offset`,
+    `limit` and `searchText` in the POST body -- without recording it, none of the
+    pagination facts can be asserted at all.
+    """
+
+    method: str
+    url: str
+    headers: dict
+    body: dict | None
 
 
 class FakeResponse:
@@ -31,18 +46,24 @@ class FakeResponse:
 
 
 class FakeSession:
-    """Maps an exact URL to a FakeResponse. Records every call for assertions."""
+    """Maps an exact URL to a FakeResponse, or to a callable that builds one.
+
+    A route may be a FakeResponse (same answer every time) or a callable
+    ``(method, url, body, headers) -> FakeResponse``. The callable form is what lets a
+    fake serve different pages for the same url based on the `offset` in the request body,
+    which is the only way to test Workday pagination.
+    """
 
     def __init__(self, routes: dict):
         self.routes = routes
-        self.calls: list[tuple[str, str, dict]] = []
+        self.calls: list[Call] = []
 
     def request(self, method, url, json=None, headers=None, timeout=None):
-        self.calls.append((method, url, headers or {}))
+        self.calls.append(Call(method, url, headers or {}, json))
         if url not in self.routes:
             return FakeResponse(404, {"error": "not found"})
         result = self.routes[url]
-        return result() if callable(result) else result
+        return result(method, url, json, headers) if callable(result) else result
 
 
 @pytest.fixture
