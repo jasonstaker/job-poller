@@ -31,5 +31,8 @@ Actions.
 | `handlers.py` | One fetch function per job-board platform |
 | `poller.py` | Entry point: fetch, diff, filter, notify |
 | `notify.py` | ntfy push |
-| `sources.json` | The company list |
+| `sources.json` | The company list, plus `manual_check` for boards that cannot be polled |
 | `state/seen.json` | Every job ID seen so far, so nothing notifies twice |
+
+Engineering notes -- which boards cannot be polled, and where the build spec turned out
+to be wrong -- are in [NOTES.md](NOTES.md).

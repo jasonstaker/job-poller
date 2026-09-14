@@ -84,10 +84,10 @@ def load_sources(path: pathlib.Path = SOURCES_PATH) -> list[dict]:
             log.warning("sources.json has unknown ats %r, skipping", ats)
             continue
         if ats not in handlers.HANDLERS:
-            # Build order steps 7-8 add Workday, Workable and BambooHR. Until then these
-            # are skipped rather than polled-and-failed, so they cannot march toward the
-            # section 9 three-strike alert for a handler that simply is not written yet.
-            log.debug("no handler for ats %r yet, skipping %d source(s)", ats, len(entries))
+            # An ats with no handler is skipped rather than polled-and-failed, so it cannot
+            # march toward the section 9 three-strike alert for a handler that does not
+            # exist. A test asserts every sources.json key is handled or explicitly skipped.
+            log.debug("no handler for ats %r, skipping %d source(s)", ats, len(entries))
             continue
         for entry in entries:
             cfg = dict(entry)

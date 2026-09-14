@@ -338,41 +338,44 @@
       "status": "probe"
     }
   ],
-  "scrape_later": [
-    {
-      "company": "Firefly Aerospace",
-      "method": "rss",
-      "host": "firefly.hrmdirect.com"
-    },
-    {
-      "company": "MDA Space",
-      "method": "html",
-      "note": "UltiPro tenant MAC5000MCDW, co-op board GUID 7667adcc-47ae-477a-9183-0d8ef8bc0748"
-    },
-    {
-      "company": "Xona Space",
-      "method": "html",
-      "note": "Paylocity, JS-rendered"
-    },
-    {
-      "company": "NordSpace",
-      "method": "html"
-    },
-    {
-      "company": "Mission Control",
-      "method": "html"
-    },
-    {
-      "company": "Canadensys",
-      "method": "html"
-    }
-  ],
   "pinpoint": [
     {
       "company": "Impulse Space",
       "subdomain": "impulsespace",
       "status": "verified",
       "note": "2026-09-14 probe: section 4.7 filed this under scrape sources, but impulsespace.pinpointhq.com/postings.json is a clean JSON API (187 postings)"
+    }
+  ],
+  "manual_check": [
+    {
+      "company": "Firefly Aerospace",
+      "method": "rss",
+      "note": "2026-09-14 probe: rss.php returns 442 bytes of text/xml with NO <item> elements, and ?rss=1 returns HTML. Section 4.7's 'real RSS feed' does not exist."
+    },
+    {
+      "company": "MDA Space",
+      "method": "html",
+      "note": "2026-09-14 probe: UltiPro JobBoardView/LoadSearchResults 404s on both recruiting. and recruiting2.ultipro.com. No working JSON endpoint found."
+    },
+    {
+      "company": "Xona Space",
+      "method": "html",
+      "note": "2026-09-14 probe: Paylocity page is a 4.3KB JS shell with no job data; would need a headless browser, which section 2's dependency limit forbids."
+    },
+    {
+      "company": "NordSpace",
+      "method": "html",
+      "note": "2026-09-14 probe: 24.9KB Webflow HTML, no JSON endpoint. HTML parsing needs a parser dependency and breaks silently on redesign."
+    },
+    {
+      "company": "Mission Control",
+      "method": "html",
+      "note": "2026-09-14 probe: /careers 404s; no job board located."
+    },
+    {
+      "company": "Canadensys",
+      "method": "html",
+      "note": "2026-09-14 probe: /careers/ 404s; no job board located."
     }
   ]
 }

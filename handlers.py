@@ -66,8 +66,12 @@ ID_FIELDS: dict[str, tuple[str, ...]] = {
     "pinpoint": ("subdomain",),
 }
 
-# Present in sources.json but with no handler yet (build order step 9).
-SKIP_ATS = frozenset({"scrape_later"})
+# Present in sources.json but deliberately never polled. `manual_check` holds companies
+# whose boards need a headless browser or an HTML parser -- section 2 limits dependencies
+# to `requests`, so those are checked by hand rather than built as brittle scrapers. Each
+# entry carries a dated note recording exactly what was probed. `scrape_later` is kept for
+# backward compatibility with older state files even though the block is gone.
+SKIP_ATS = frozenset({"scrape_later", "manual_check"})
 
 
 def source_id(cfg: dict) -> str:
@@ -102,7 +106,10 @@ class FetchContext:
     """Shared per-run HTTP state. Mutable: it counts requests to schedule jitter."""
 
     session: requests.Session
-    timeout: tuple[float, float] = (5.0, 20.0)   # (connect, read)
+    # (connect, read). The read half is generous because the largest boards are big:
+    # Anduril is a 2.3MB payload with 2,274 postings, and it intermittently takes
+    # 25-40s when Greenhouse is throttling. A 20s read timeout dropped it entirely.
+    timeout: tuple[float, float] = (5.0, 45.0)
     user_agent: str = UA_DEFAULT
     jitter: bool = True
     log: logging.Logger = log

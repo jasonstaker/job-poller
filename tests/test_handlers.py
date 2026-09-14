@@ -341,7 +341,7 @@ def test_every_request_carries_a_timeout(ctx_factory):
 
     ctx = FetchContext(session=RecordingSession(), jitter=False)
     fetch_greenhouse(cfg, ctx)
-    assert captured["timeout"] == (5.0, 20.0)
+    assert captured["timeout"] == (5.0, 45.0)
 
 
 # --------------------------------------------------------------------------------------
