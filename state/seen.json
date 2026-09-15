@@ -1,7 +1,7 @@
 {
   "bootstrapped_at": "2026-09-13T04:54:14Z",
-  "last_run_at": "2026-09-15T17:50:23Z",
-  "run_counter": 18,
+  "last_run_at": "2026-09-15T20:39:56Z",
+  "run_counter": 19,
   "schema_version": 1,
   "seen": {
     "ashby:Luminary::00e195a3-ea18-43ee-b13f-996a80de57b5": {
@@ -1075,6 +1075,12 @@
     "ashby:applied::e0c23485-f535-4086-8b1e-41c5a0cd6de4": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "ashby:applied::e1779868-337b-46df-96e0-fd7202fe4297": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Software Integration Engineer, Self-Driving"
     },
     "ashby:applied::e1cb83ac-7326-410a-9f3f-be33ed575fbf": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -2664,6 +2670,12 @@
     "ashby:skydio::53bd205b-24a7-4a54-a196-6694a57b7983": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "ashby:skydio::547038e0-b191-4972-8766-f1fd176cd0d6": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Recruiting Coordinator"
     },
     "ashby:skydio::54ae1ba8-e940-486a-99e9-991cb917e5cd": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -6223,6 +6235,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "greenhouse:andurilindustries::5131034007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Software Engineer - Maritime"
+    },
     "greenhouse:andurilindustries::5131066007": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -6888,6 +6906,12 @@
     "greenhouse:andurilindustries::5156600007": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:andurilindustries::5156676007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Associate Facilities Manager"
     },
     "greenhouse:andurilindustries::5156719007": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -8129,6 +8153,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "greenhouse:andurilindustries::5179631007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior Industrial Engineer, General"
+    },
     "greenhouse:andurilindustries::5179632007": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -8564,6 +8594,12 @@
     "greenhouse:andurilindustries::5188527007": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:andurilindustries::5188698007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:legal",
+      "title": "Legal Counsel, Investigations"
     },
     "greenhouse:andurilindustries::5189303007": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -10705,6 +10741,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "greenhouse:andurilindustries::5219013007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Buyer, Advanced Effects"
+    },
     "greenhouse:andurilindustries::5219103007": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -12728,6 +12770,12 @@
       "reason": "no_software_marker",
       "title": "Winter 2027 Technical Program Management Co-op"
     },
+    "greenhouse:andurilindustries::5236573007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_software_marker",
+      "title": "Winter 2027 Test Automation Engineer Co-op"
+    },
     "greenhouse:andurilindustries::5236577007": {
       "first_seen": "2026-09-15T17:50:23Z",
       "outcome": "rejected",
@@ -12739,6 +12787,18 @@
       "outcome": "rejected",
       "reason": "no_software_marker",
       "title": "Winter 2027 PCB Layout Engineer Co-op"
+    },
+    "greenhouse:andurilindustries::5236583007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_software_marker",
+      "title": "Winter 2027 Test & Evaluation Engineer Co-op"
+    },
+    "greenhouse:andurilindustries::5236585007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_software_marker",
+      "title": "Winter 2027 Warhead Engineer Co-op"
     },
     "greenhouse:andurilindustries::5236587007": {
       "first_seen": "2026-09-15T17:50:23Z",
@@ -12752,17 +12812,41 @@
       "reason": "title_reject:manufacturing",
       "title": "Winter 2027 Manufacturing Engineer Co-op"
     },
+    "greenhouse:andurilindustries::5236592007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:supply chain",
+      "title": "Winter 2027 Supply Chain Analyst Co-op"
+    },
+    "greenhouse:andurilindustries::5236594007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:supply chain",
+      "title": "Winter 2027 Supply Chain Engineer Co-op"
+    },
     "greenhouse:andurilindustries::5236596007": {
       "first_seen": "2026-09-15T17:50:23Z",
       "outcome": "rejected",
       "reason": "no_software_marker",
       "title": "Winter 2027 Procurement/Buyer Co-op"
     },
+    "greenhouse:andurilindustries::5236599007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_software_marker",
+      "title": "Winter 2027 Systems Engineer Co-op"
+    },
     "greenhouse:andurilindustries::5236601007": {
       "first_seen": "2026-09-15T17:50:23Z",
       "outcome": "rejected",
       "reason": "title_reject:mechanical",
       "title": "Winter 2027 Mechanical Engineer Co-op"
+    },
+    "greenhouse:andurilindustries::5236639007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Electrical Engineer, Space Emerging Talent"
     },
     "greenhouse:andurilindustries::5236720007": {
       "first_seen": "2026-09-14T20:48:01Z",
@@ -12817,6 +12901,12 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Staff Engineer, Production Planning and Scheduling"
+    },
+    "greenhouse:andurilindustries::5237840007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Staff Threat & Attack Research Engineer"
     },
     "greenhouse:andurilindustries::5237886007": {
       "first_seen": "2026-09-14T20:48:01Z",
@@ -12883,6 +12973,12 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Senior Front End Software Engineer, React"
+    },
+    "greenhouse:andurilindustries::5238342007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Technical Program Manager, IT"
     },
     "greenhouse:andurilindustries::5238353007": {
       "first_seen": "2026-09-15T02:33:06Z",
@@ -12974,6 +13070,65 @@
       "reason": "no_internship_marker",
       "title": "Staff Industrial Engineer, Maritime Production System Design"
     },
+    "greenhouse:andurilindustries::5239028007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Automation Engineer, General"
+    },
+    "greenhouse:andurilindustries::5239031007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior Material Flow Engineer, General"
+    },
+    "greenhouse:andurilindustries::5239058007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Technical Operations Engineer"
+    },
+    "greenhouse:andurilindustries::5239068007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:mechanical",
+      "title": "Senior Mechanical Engineer, Anduril Expeditionary Systems"
+    },
+    "greenhouse:andurilindustries::5239083007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "notified",
+      "title": "2027 Flight Software Engineer Intern"
+    },
+    "greenhouse:andurilindustries::5239144007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior RF Mission Systems Engineer, Air Dominance & Strike, Active Clearance"
+    },
+    "greenhouse:andurilindustries::5239219007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Staff Threat & Attack Research Engineer"
+    },
+    "greenhouse:andurilindustries::5239220007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Staff Threat & Attack Research Engineer"
+    },
+    "greenhouse:andurilindustries::5239221007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Staff Threat & Attack Research Engineer"
+    },
+    "greenhouse:andurilindustries::5239222007": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Staff Threat & Attack Research Engineer"
+    },
     "greenhouse:apptronik::5572958004": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -13054,6 +13209,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "greenhouse:apptronik::5981006004": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Principal Electrical Engineer - Compute and Sensing"
+    },
     "greenhouse:apptronik::5985132004": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -13117,6 +13278,12 @@
     "greenhouse:apptronik::6016652004": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:apptronik::6017400004": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Principal Electrical Engineer - Compute and Sensing"
     },
     "greenhouse:apptronik::6017584004": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -21270,6 +21437,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "greenhouse:relativity::8490576002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Avionics Production Supervisor, PCBA"
+    },
     "greenhouse:relativity::8494018002": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -24500,6 +24673,54 @@
       "reason": "no_internship_marker",
       "title": "Senior Director, Business Development - Satellites (TS/SCI Clearance)"
     },
+    "greenhouse:rocketlab::7996354003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Electrical Engineer I"
+    },
+    "greenhouse:rocketlab::7996392003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Electrical Engineer II"
+    },
+    "greenhouse:rocketlab::7996416003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Harness Design Engineer I"
+    },
+    "greenhouse:rocketlab::7996421003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Harness Design Engineer II"
+    },
+    "greenhouse:rocketlab::7996425003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "RF Phased Array Engineer I"
+    },
+    "greenhouse:rocketlab::7996428003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "RF Phased Array Engineer II"
+    },
+    "greenhouse:rocketlab::7996430003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Systems Engineer I"
+    },
+    "greenhouse:rocketlab::7996445003": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Systems Engineer II"
+    },
     "greenhouse:scaleai::4282118005": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -25523,6 +25744,12 @@
     "greenhouse:spacex::8362795002": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:spacex::8377056002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Software Engineer, C++ - Top Secret Clearance"
     },
     "greenhouse:spacex::8378521002": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -29804,6 +30031,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "greenhouse:spacex::8627395002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:technician",
+      "title": "Development Test Technician - 2nd Shift"
+    },
     "greenhouse:spacex::8627410002": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -30603,6 +30836,12 @@
     "greenhouse:spacex::8642976002": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:spacex::8643277002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Accountant"
     },
     "greenhouse:spacex::8643431002": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -31489,6 +31728,12 @@
     "greenhouse:spacex::8671116002": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:spacex::8671126002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:technician",
+      "title": "PCB Process Technician (Starlink)"
     },
     "greenhouse:spacex::8672198002": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -35282,6 +35527,12 @@
       "reason": "no_internship_marker",
       "title": "Shipping Specialist"
     },
+    "greenhouse:spacex::8805813002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Hardware Reliability Specialist (Starlink Aviation)"
+    },
     "greenhouse:spacex::8805854002": {
       "first_seen": "2026-09-14T16:59:53Z",
       "outcome": "rejected",
@@ -35443,6 +35694,24 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Operations Engineer (Material Flow)"
+    },
+    "greenhouse:spacex::8811663002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:manufacturing",
+      "title": "PCB Manufacturing Engineer"
+    },
+    "greenhouse:spacex::8811665002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Construction Project Engineer (MEP)"
+    },
+    "greenhouse:spacex::8811848002": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Supervisor, Spaceport Operations (Transportation)"
     },
     "greenhouse:stokespacetechnologies::4963182004": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -36782,6 +37051,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "greenhouse:ursamajor::4706707005": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Buyer II"
+    },
     "greenhouse:ursamajor::4707737005": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -37121,6 +37396,12 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Staff Design Engineer, Solid Missile Systems"
+    },
+    "greenhouse:ursamajor::4734153005": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Buyer II"
     },
     "greenhouse:vannevarlabs::4172631007": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -38445,6 +38726,12 @@
       "outcome": "rejected",
       "reason": "title_reject:structures",
       "title": "Manufacturing Coordinator, Structures Manufacturing"
+    },
+    "greenhouse:vast::4713565006": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Proposal Manager, Special and Commercial Programs"
     },
     "greenhouse:vatnsystems::4170296009": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -40440,6 +40727,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "lever:shieldai::077b413b-c901-4206-9f5a-d962c6f9babf": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:structures",
+      "title": "Staff Supplier Development Engineer - Structures & Welding (R5984)"
+    },
     "lever:shieldai::0915a15c-9f24-4851-a375-006bab31d6c6": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -40738,6 +41031,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "lever:shieldai::2bd24229-55d7-4750-bd7c-91f1308597d7": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior Staff YouTube Producer (R5963)"
+    },
     "lever:shieldai::2beb3eac-d28f-4338-bebd-9be073d67b28": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -40868,6 +41167,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "lever:shieldai::3824ce13-5af0-436c-91bb-835b2740bf95": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Software Integration & Test Manager"
+    },
     "lever:shieldai::3834c3fd-5957-481d-b935-b21ea773944e": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -40959,6 +41264,12 @@
     "lever:shieldai::40edd151-badd-47c1-8647-203c4a4f30ec": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "lever:shieldai::41380d4b-7a45-45a3-bb10-2488ad6ebad8": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior V-BAT Air Vehicle Operator, Production Flight Test (R4844)"
     },
     "lever:shieldai::41468aca-c1c2-4a7b-aec8-f499e64b6d1e": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -41750,6 +42061,12 @@
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
     },
+    "lever:shieldai::ac228821-b2f8-4155-a119-b05e16ebaefe": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior Engineer, AI Engineering (R5856)"
+    },
     "lever:shieldai::ac3eb263-7cb3-4c06-a3df-bbfce7f31b46": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -42465,6 +42782,12 @@
     "lever:telesat::59650ffb-4318-4ba1-810c-485c0d5b746d": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "lever:telesat::5d804bf8-0b16-49e4-af23-a164e84d0bbb": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Project Coordinator - PLM Implementation"
     },
     "lever:telesat::60993d0c-4fdd-41e2-a505-87afccfc233b": {
       "first_seen": "2026-09-15T13:43:18Z",
@@ -43349,6 +43672,12 @@
     "lever:zoox::bc11276c-8db7-426e-9d00-d41c2097723a": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "lever:zoox::bdeeba8c-947d-474d-9d90-d788d09d0ce6": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Staff/Senior Staff Software Engineer - Product Security"
     },
     "lever:zoox::be1539af-482f-478d-823d-a00f44958aa0": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -44908,6 +45237,12 @@
       "outcome": "backfill",
       "title": "Embedded Software Engineer III - Lunar Permanence"
     },
+    "workday:blueorigin:BlueOrigin::/job/Greater-Seattle-Area/Engineer---Avionics--Instruments---GNC-Sr_R72063-1": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:gnc",
+      "title": "Engineer - Avionics, Instruments & GNC Sr"
+    },
     "workday:blueorigin:BlueOrigin::/job/Greater-Seattle-Area/Engineer---Controls---Automation-III_R71421": {
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
@@ -45448,6 +45783,12 @@
       "outcome": "backfill",
       "title": "Software Development Engineer II"
     },
+    "workday:blueorigin:BlueOrigin::/job/Greater-Seattle-Area/Software-Engineer-II---Test-Automation_R72237": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Software Engineer II – Test Automation"
+    },
     "workday:blueorigin:BlueOrigin::/job/Greater-Seattle-Area/Software-Engineer-III---TeraWave_R71647": {
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
@@ -45884,6 +46225,12 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "Test Engineer I - Early Career & New Graduate Rotation (2027 Starts)"
+    },
+    "workday:blueorigin:BlueOrigin::/job/Greater-Seattle-Area/Test-Engineer-III---Electrical-Equipment-for-Fluid-Systems_R72155": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Test Engineer III - Electrical Equipment for Fluid Systems"
     },
     "workday:blueorigin:BlueOrigin::/job/Greater-Seattle-Area/Testbed-Validation-Engineer---Blue-Ring_R66412-1": {
       "first_seen": "2026-09-14T18:01:13Z",
@@ -46586,6 +46933,12 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "MK1 Electrical Vehicle Test Engineer II – Lunar Permanence"
+    },
+    "workday:blueorigin:BlueOrigin::/job/Space-Coast-FL/MK1-Fluids-Vehicle-Test-III---Lunar-Permanence_R71551": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "MK1 Fluids Vehicle Test III - Lunar Permanence"
     },
     "workday:blueorigin:BlueOrigin::/job/Space-Coast-FL/Manager---Data-Systems-and-Controls-Engineering--Industrial-Automation--for-Ground-Systems_R61529": {
       "first_seen": "2026-09-14T18:01:13Z",
@@ -48574,6 +48927,12 @@
       "outcome": "backfill",
       "title": "Planner II"
     },
+    "workday:cae:career::/job/Tampa/Process-Improvement-Analyst-l_123148": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Hardware Quality Specialist"
+    },
     "workday:cae:career::/job/Tampa/Program-Manager-III_123534": {
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
@@ -49845,6 +50204,12 @@
     "workday:nvidia:NVIDIAExternalCareerSite::/job/Israel-Tel-Aviv/SDK-Eth-Software-Team-Manager_JR2013953": {
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
+      "title": "SDK Eth Software Team Manager"
+    },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/Israel-Tel-Aviv/SDK-Eth-Software-Team-Manager_JR2025829": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
       "title": "SDK Eth Software Team Manager"
     },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/Israel-Tel-Aviv/Senior-Data-Center-Engineer_JR2023708": {
@@ -51706,6 +52071,12 @@
       "outcome": "backfill",
       "title": "PhD Research Intern, Generative AI - 2026"
     },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/PhD-Research-Intern--Generative-AI-for-Physical-AI---2027_JR2025025": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "title_reject:phd",
+      "title": "PhD Research Intern, Generative AI for Physical AI - 2027"
+    },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/PhD-Software-Engineering-Intern--Decision-Intelligence---Fall-2026_JR2017522": {
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
@@ -52845,6 +53216,12 @@
       "outcome": "backfill",
       "title": "Senior Services Supply Chain Inventory Management and Control Engineer"
     },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Senior-Silicon-Circuit-Co-Design-Engineer_JR2025178": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior Silicon Circuit Co-Design Engineer"
+    },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Senior-Site-Reliability-Engineer---HPC_JR2013271": {
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
@@ -53912,8 +54289,20 @@
       "outcome": "backfill",
       "title": "Senior Product Engineer - Board Products"
     },
+    "workday:nvidia:NVIDIAExternalCareerSite::JR2011649": {
+      "first_seen": "2026-09-15T20:39:56Z",
+      "outcome": "rejected",
+      "reason": "empty_title",
+      "title": ""
+    },
     "workday:nvidia:NVIDIAExternalCareerSite::JR2021436": {
       "first_seen": "2026-09-14T23:36:08Z",
+      "outcome": "rejected",
+      "reason": "empty_title",
+      "title": ""
+    },
+    "workday:nvidia:NVIDIAExternalCareerSite::JR2023475": {
+      "first_seen": "2026-09-15T20:39:56Z",
       "outcome": "rejected",
       "reason": "empty_title",
       "title": ""
@@ -53946,110 +54335,110 @@
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:applied": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:gecko-robotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:havocai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:reliable-robotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:sanctuary": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:saronic": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:skydio": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "ashby:skywatch": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "bamboohr:sedarotech": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:agilityrobotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:andurilindustries": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:apptronik": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:archer56": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:astranis": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:capellaspace": {
       "consecutive_failures": 0,
-      "consecutive_zeros": 18,
+      "consecutive_zeros": 19,
       "last_failure_alert_run": null,
       "last_ok_run": null,
       "last_zero_alert_run": null
@@ -54058,194 +54447,194 @@
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:epirus": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:figureai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:flyzipline": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:ionq": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:k2spacecorporation": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:kodiak": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:machindustries": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:muonspace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:nerostechnologies": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:nuro": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:physicsx": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:planetlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:relativity": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:rocketlab": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:scaleai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:schrdinger": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:spacex": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:stokespacetechnologies": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:torcrobotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:trueanomalyinc": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:ursamajor": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:vannevarlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:vardaspace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:vast": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:vatnsystems": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "greenhouse:whisperaero": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:attabotics": {
       "consecutive_failures": 0,
-      "consecutive_zeros": 18,
+      "consecutive_zeros": 19,
       "last_failure_alert_run": null,
       "last_ok_run": null,
       "last_zero_alert_run": null
@@ -54254,119 +54643,119 @@
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:kepler": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:loftorbital": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:merlinlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:palantir": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:pyka": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:shieldai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:telesat": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "lever:zoox": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "pinpoint:impulsespace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "workable:ghgsat": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "workday:blueorigin:BlueOrigin": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "workday:bostondynamics:Boston_Dynamics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "workday:cadence:Univ_Careers": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "workday:cae:career": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "workday:nvidia:NVIDIAExternalCareerSite": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     },
     "workday:wisk:Wisk_Careers": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 18,
+      "last_ok_run": 19,
       "last_zero_alert_run": null
     }
   }
