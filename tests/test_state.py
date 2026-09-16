@@ -50,11 +50,17 @@ def test_missing_file_is_bootstrap(tmp_path):
     assert is_bootstrap and state["seen"] == {}
 
 
-def test_empty_file_is_bootstrap(tmp_path):
+def test_empty_file_is_corrupt_not_a_fresh_start(tmp_path):
+    """Behaviour changed deliberately 2026-09-16.
+
+    An empty seen.json used to re-bootstrap silently: mark every open role as seen, send
+    nothing, exit 0, then commit the amnesiac state over the good one. See the audit
+    regression suite in tests/test_robustness.py.
+    """
     p = tmp_path / "seen.json"
     p.write_text("   \n", encoding="utf-8")
-    _, is_bootstrap = load_state(p)
-    assert is_bootstrap
+    with pytest.raises(StateCorrupt):
+        load_state(p)
 
 
 def test_populated_state_is_not_bootstrap(tmp_path):
@@ -409,6 +415,7 @@ class Args:
         self.source = self.ats = None
         self.dry_run = self.no_jitter = self.verbose = False
         self.force_workday = True
+        self.bootstrap = False
         self.probe = self.test_notify = False
         self.list_open = None
         self.__dict__.update(kw)
@@ -429,7 +436,7 @@ def _seeded_state(tmp_path, sources):
     return p
 
 
-def _run_with(monkeypatch, tmp_path, state_path, jobs_by_source, cfgs):
+def _run_with(monkeypatch, tmp_path, state_path, jobs_by_source, cfgs, **argkw):
     """Drive poller.run() with a stubbed fetch and a recording notifier."""
     sent = []
     monkeypatch.setattr(poller, "load_sources", lambda *a, **k: cfgs)
@@ -440,7 +447,7 @@ def _run_with(monkeypatch, tmp_path, state_path, jobs_by_source, cfgs):
     monkeypatch.setattr(poller.notify, "notify_job", lambda j, **k: sent.append(j) or True)
     monkeypatch.setattr(poller.notify, "notify_summary", lambda js, **k: sent.extend(js) or True)
     monkeypatch.setattr(poller.notify, "notify_alert", lambda *a, **k: True)
-    rc = poller.run(Args(state_path))
+    rc = poller.run(Args(state_path, **argkw))
     return rc, sent
 
 
@@ -523,7 +530,8 @@ def test_bootstrap_still_takes_precedence_over_backfill(tmp_path, monkeypatch):
     p = tmp_path / "seen.json"
     jobs = [job(source="greenhouse:vardaspace", job_id="1",
                 title="Software Engineer Intern", company="Varda Space")]
-    rc, sent = _run_with(monkeypatch, tmp_path, p, {"greenhouse:vardaspace": jobs}, [GH_CFG])
+    rc, sent = _run_with(monkeypatch, tmp_path, p, {"greenhouse:vardaspace": jobs}, [GH_CFG],
+                         bootstrap=True)
     assert rc == 0 and sent == []
     final, _ = load_state(p)
     assert {v["outcome"] for v in final["seen"].values()} == {"bootstrap"}

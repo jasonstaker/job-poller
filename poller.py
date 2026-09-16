@@ -36,9 +36,12 @@ SCHEMA_VERSION = 1
 
 # Section 7: more than this many notifiable jobs in one run collapses to a summary.
 SUMMARY_THRESHOLD = 8
-# Not in the spec. If a run ever produces this many new jobs, something is wrong with the
-# state file rather than with the job market -- suppress the flood and say so instead.
-ANOMALY_THRESHOLD = 200
+# Not in the spec. More than this many MATCHING jobs in one run means something is wrong
+# with state rather than with the job market, so they collapse into one digest instead of
+# flooding the phone. Counted on notifiable jobs only: the 2026-09-14 audit found the old
+# version counting ALL new jobs across all 61 boards, so a flood of junk on one board
+# suppressed -- and permanently buried -- the two real internships beside it.
+ANOMALY_NOTIFY_THRESHOLD = 25
 # Section 9 alert thresholds.
 FAILURE_ALERT_STREAK = 3
 ZERO_ALERT_STREAK = 5
@@ -164,12 +167,20 @@ def load_state(path: pathlib.Path = STATE_PATH) -> tuple[dict, bool]:
         stale.unlink()
 
     if not path.exists():
+        # Deliberately NOT an automatic bootstrap. In CI a missing state file means the
+        # checkout or the commit-back broke, not that it is day one; re-bootstrapping there
+        # would mark all ~13,000 open roles seen, send nothing, go green, and then commit
+        # the amnesiac state over the good one -- destroying the git-history recovery this
+        # docstring promises. The caller decides, via --bootstrap.
         return new_state(), True
 
     text = path.read_text(encoding="utf-8")
     if not text.strip():
-        log.warning("%s is empty; treating as first run", path)
-        return new_state(), True
+        raise StateCorrupt(
+            f"{path} exists but is empty. Refusing to re-bootstrap over it: that would "
+            f"mark every open role as seen and send nothing. Recover with "
+            f"`git checkout HEAD~1 -- {path}`, or pass --bootstrap to start fresh."
+        )
 
     try:
         state = json.loads(text)
@@ -304,6 +315,8 @@ def _source_health(state: dict, sid: str) -> dict:
         "consecutive_failures": 0,
         "consecutive_zeros": 0,
         "last_ok_run": None,
+        "first_ok_run": None,
+        "backfilled_at": None,
         "last_failure_alert_run": None,
         "last_zero_alert_run": None,
     })
@@ -336,6 +349,8 @@ def update_health(state: dict, results: list[handlers.FetchResult],
             continue
 
         health["consecutive_failures"] = 0
+        if health.get("first_ok_run") is None:
+            health["first_ok_run"] = run_counter
         if result.jobs:
             health["consecutive_zeros"] = 0
             health["last_ok_run"] = run_counter
@@ -466,7 +481,7 @@ def run(args) -> int:
     # Captured BEFORE update_health, which setdefaults an entry for every polled source.
     # A source absent here has never been polled, so everything on its board is history
     # rather than news -- see the backfill split below.
-    known_sources = set(state["sources"])
+    known_sources = {sid for sid, h in state["sources"].items() if _is_established(h)}
 
     run_counter = state["run_counter"] + 1
     now = utcnow()
@@ -476,6 +491,11 @@ def run(args) -> int:
         state_hints=state["sources"],
     )
 
+    if is_bootstrap and not args.bootstrap:
+        log.error("::error::%s does not exist and --bootstrap was not given. Refusing to "
+                  "start fresh: in CI this means the checkout or commit-back broke, and "
+                  "bootstrapping would silently mark every open role as seen.", args.state)
+        return 3
     if is_bootstrap:
         log.info("BOOTSTRAP: no prior state, recording everything and sending nothing")
 
@@ -524,6 +544,7 @@ def run(args) -> int:
 
     passed: list[dict] = []
     rejected: list[tuple[dict, filters.Verdict]] = []
+    undelivered = 0
 
     if is_bootstrap:
         for job in new_jobs:
@@ -553,7 +574,8 @@ def run(args) -> int:
                 continue
             passed.append(job)
 
-        _notify_and_record(state, passed, rejected, dropped, fresh_jobs, now, args)
+        undelivered = _notify_and_record(state, passed, rejected, dropped,
+                                         fresh_jobs, now, args)
 
     # Section 9 alerts, aggregated: a network blip that breaks 20 boards sends one push.
     if (broken or drifted) and not args.dry_run:
@@ -579,7 +601,30 @@ def run(args) -> int:
         return 0
 
     save_state(args.state, state)
+
+    if undelivered:
+        # Exit non-zero so the Actions run goes RED. Until 2026-09-14 a broken NTFY_TOPIC
+        # exited 0 and looked identical to a quiet job market -- and since send() is only
+        # reached when there is something to push, it left no evidence on the ~95% of runs
+        # with nothing new. The jobs themselves are safe: they stay unseen and retry.
+        log.error("::error::%d job(s) could not be delivered; check NTFY_TOPIC and ntfy.sh",
+                  undelivered)
+        return 1
     return 0
+
+
+def _is_established(health: dict | None) -> bool:
+    """Has this board ever actually been seen working?
+
+    Mere presence in state["sources"] is NOT enough: _source_health setdefaults an entry
+    before the result.ok check, so a board whose very FIRST poll failed used to look
+    established on its next run. Its whole catalogue then arrived as fresh jobs instead of
+    backfill. Anduril's 2.3MB board times out intermittently, so this was a live hazard.
+    """
+    if not health:
+        return False
+    return any(health.get(k) is not None
+               for k in ("backfilled_at", "first_ok_run", "last_ok_run"))
 
 
 def _record_backfill(state: dict, jobs: list[dict], now: str) -> None:
@@ -594,6 +639,9 @@ def _record_backfill(state: dict, jobs: list[dict], now: str) -> None:
         record_seen(state, job, "backfill", now=now)
         by_source[job["source"]] = by_source.get(job["source"], 0) + 1
 
+    for sid in {j["source"] for j in jobs}:
+        _source_health(state, sid)["backfilled_at"] = now
+
     matching = [j for j in jobs if filters.check_title(j["title"]).passed]
     log.info("BACKFILL: %d job(s) from %d new source(s), 0 notifications sent",
              len(jobs), len(by_source))
@@ -605,14 +653,18 @@ def _record_backfill(state: dict, jobs: list[dict], now: str) -> None:
             log.info("    %s - %s", job["company"], job["title"])
 
 
-def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) -> None:
-    """Notify, then record. Ordering matters -- see below.
+def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) -> int:
+    """Notify, then record. Returns the number of jobs that could NOT be delivered.
 
-    A job whose push FAILS is deliberately left out of seen.json so the next run retries
-    it. Recording first would mark it seen and silently swallow the posting, which is the
-    one outcome this tool exists to prevent.
+    The invariant, which the 2026-09-14 audit found violated: a job is written to seen.json
+    only if it was pushed, deliberately filtered out, or deliberately backfilled. A job
+    whose push FAILS is left unseen so the next run retries it. Recording first would mark
+    it seen and silently swallow the posting -- the one outcome this tool exists to prevent.
     """
     for job, verdict in rejected:
+        # Visible in the Actions log, not just as an integer in the summary line. A
+        # spurious reject is permanent, so it needs to leave evidence.
+        log.info("skip %-28s %-58s %s", job["company"][:28], job["title"][:58], verdict.reason)
         record_seen(state, job, "rejected", reason=verdict.reason, now=now)
     for job, winner in dropped:
         record_seen(state, job, "duplicate", duplicate_of=winner, now=now)
@@ -622,40 +674,43 @@ def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) ->
 
     if args.dry_run:
         log.info("--dry-run: would notify %d job(s)", len(passed))
-        return
+        return 0
     if not passed:
-        return
+        return 0
 
-    # Not in the spec. A run this large means the state file was lost or truncated, not
-    # that 200 internships opened at once -- so say that instead of sending 200 pushes.
-    if len(new_jobs) > ANOMALY_THRESHOLD:
-        log.error("ANOMALY: %d new jobs in one run; suppressing individual pushes",
-                  len(new_jobs))
-        notify.notify_alert(
-            "Job poller anomaly",
-            f"{len(new_jobs)} new jobs in one run ({len(passed)} would have notified). "
-            f"State may have been lost; check state/seen.json.",
-        )
-        for job in passed:
-            record_seen(state, job, "summarized", now=now)
-        return
+    # Guard against a flood of NOTIFIABLE jobs, which is the only kind that could spam the
+    # phone. The old version counted every new job across all 61 boards, so 400 junk
+    # postings on one board suppressed the two real internships that arrived alongside
+    # them -- and recorded those two as seen without ever pushing them.
+    if len(passed) > ANOMALY_NOTIFY_THRESHOLD:
+        log.error("::error::ANOMALY: %d matching jobs in one run; sending one digest",
+                  len(passed))
+        if notify.notify_summary(passed):
+            for job in passed:
+                record_seen(state, job, "summarized", now=now)
+            return 0
+        log.error("::error::digest push failed; %d job(s) stay unseen and retry", len(passed))
+        return len(passed)
 
     if len(passed) > SUMMARY_THRESHOLD:
         # Section 7: one summary instead of 9+ pushes. Full list already went to the log.
         if notify.notify_summary(passed):
             for job in passed:
                 record_seen(state, job, "summarized", now=now)
-        else:
-            log.error("summary push failed; %d job(s) stay unseen and retry next run",
-                      len(passed))
-        return
+            return 0
+        log.error("::error::summary push failed; %d job(s) stay unseen and retry next run",
+                  len(passed))
+        return len(passed)
 
+    undelivered = 0
     for job in passed:
         if notify.notify_job(job):
             record_seen(state, job, "notified", now=now)
         else:
-            log.error("push failed for %s; it stays unseen and retries next run",
+            undelivered += 1
+            log.error("::error::push failed for %s; it stays unseen and retries next run",
                       seen_key(job))
+    return undelivered
 
 
 def cmd_list_open(sources: list[dict], ctx: FetchContext, path: pathlib.Path) -> int:
@@ -735,6 +790,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
                    help="run the full pipeline but send no pushes and write no state")
     p.add_argument("--source", help="comma-separated source ids, e.g. greenhouse:vardaspace")
     p.add_argument("--ats", help="comma-separated ats types, e.g. lever,ashby")
+    p.add_argument("--bootstrap", action="store_true",
+                   help="allow starting from an empty state (marks everything seen, sends "
+                        "nothing). Never set in CI -- a missing state file there is a bug.")
     p.add_argument("--list-open", nargs="?", const="open-internships.md", metavar="PATH",
                    help="write all currently-open matching roles to a markdown file and exit")
     p.add_argument("--test-notify", action="store_true",
