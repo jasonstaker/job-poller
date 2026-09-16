@@ -6,6 +6,7 @@ The pipeline order in `run` is load-bearing; see the comment there before rearra
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -233,6 +234,39 @@ def save_state(path: pathlib.Path, state: dict) -> None:
     # os.replace, NOT os.rename: rename raises FileExistsError on Windows when the
     # destination exists, which is every run after the first.
     os.replace(tmp, path)
+
+
+def filter_version() -> str:
+    """Short hash of the section 6 keyword lists.
+
+    Lets the poller notice that the filter itself changed, which is what makes tuning
+    retroactive. Before this, widening the lists only affected FUTURE postings: anything
+    already recorded as rejected was permanently invisible, because diff_new keys on seen.
+    The SpaceX "New Graduate Engineer, Software" roles sat in state exactly that way.
+    """
+    payload = json.dumps([
+        filters.INTERNSHIP_MARKERS, filters.SOFTWARE_MARKERS,
+        filters.TITLE_REJECT, filters.CLEARANCE_REJECT, filters.CLEARANCE_ALLOW,
+    ], sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+
+
+def rescan_rejected(state: dict) -> list[str]:
+    """Forget rejections the current filter would no longer make.
+
+    Deliberately DELETES the entries rather than trying to re-notify from them: a stored
+    entry has only a title, no url or company, so it cannot be pushed. Dropping the key
+    lets the next fetch rediscover the job from the live board with full data, after which
+    it flows through the ordinary diff -> filter -> notify path. Roles that have since been
+    taken down simply never come back, which is correct.
+    """
+    freed = [k for k, v in state["seen"].items()
+             if v.get("outcome") == "rejected"
+             and v.get("title")
+             and filters.check_title(v["title"]).passed]
+    for key in freed:
+        del state["seen"][key]
+    return freed
 
 
 def seen_key(job: dict) -> str:
@@ -550,6 +584,15 @@ def run(args) -> int:
                   "start fresh: in CI this means the checkout or commit-back broke, and "
                   "bootstrapping would silently mark every open role as seen.", args.state)
         return 3
+    current_filter = filter_version()
+    if not is_bootstrap and state.get("filter_version") not in (None, current_filter):
+        freed = rescan_rejected(state)
+        if freed:
+            log.info("FILTER CHANGED (%s -> %s): released %d previously-rejected job(s) "
+                     "for re-evaluation", state.get("filter_version"), current_filter,
+                     len(freed))
+    state["filter_version"] = current_filter
+
     if is_bootstrap:
         log.info("BOOTSTRAP: no prior state, recording everything and sending nothing")
 
@@ -612,21 +655,27 @@ def run(args) -> int:
         # 5. Filter. Title first; then, for Greenhouse survivors only, fetch the one
         #    description body needed for the clearance check.
         for job in kept:
-            verdict = filters.check_title(job["title"])
-            if not verdict.passed:
-                rejected.append((job, verdict))
+            # Title first, so a doomed job never costs a content fetch.
+            if not filters.check_title(job["title"]).passed:
+                rejected.append((job, filters.evaluate(job)))
                 continue
 
+            # Greenhouse omits descriptions from the bulk listing, so the body for the
+            # clearance check is fetched lazily -- only for jobs that are new AND already
+            # past the title filter, which is 0-5 requests per run.
             if job["ats"] == "greenhouse" and not job["content"]:
                 cfg = by_source.get(job["source"])
                 if cfg:
                     job["content"] = greenhouse_fetch_content(cfg, job["job_id"], ctx)
 
-            clearance = filters.check_clearance(job["content"]) if job["content"] else None
-            if clearance is not None and not clearance.passed:
-                rejected.append((job, clearance))
-                continue
-            passed.append(job)
+            # filters.evaluate is the single decision point, so the function the tests
+            # cover is the one production runs. It used to be reimplemented inline here,
+            # leaving evaluate() dead code with five tests pointed at it.
+            verdict = filters.evaluate(job)
+            if verdict.passed:
+                passed.append(job)
+            else:
+                rejected.append((job, verdict))
 
         undelivered = _notify_and_record(state, passed, rejected, dropped,
                                          fresh_jobs, now, args)

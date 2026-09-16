@@ -214,3 +214,80 @@ def test_a_quiet_run_with_nothing_to_push_still_succeeds(tmp_path, monkeypatch):
     monkeypatch.setattr(poller, "build_session", lambda: object())
     monkeypatch.setattr(poller, "fetch_source", lambda cfg, ctx: result(cfg["source_id"], jobs=[]))
     assert poller.run(Args(p)) == 0
+
+
+# --------------------------------------------------------------------------------------
+# Finding 13 -- filter tuning was not retroactive
+# --------------------------------------------------------------------------------------
+
+
+def test_filter_version_changes_when_the_keyword_lists_change(monkeypatch):
+    before = poller.filter_version()
+    monkeypatch.setattr(poller.filters, "SOFTWARE_MARKERS",
+                        poller.filters.SOFTWARE_MARKERS + ("quantum widgetry",))
+    assert poller.filter_version() != before
+
+
+def test_rescan_releases_rejections_the_new_filter_would_accept():
+    """Storing `reason` was meant to let the lists be tuned with evidence -- but nothing
+    ever re-read it, so a widened filter resurfaced nothing."""
+    state = new_state()
+    state["seen"] = {
+        "greenhouse:x::1": {"outcome": "rejected", "reason": "no_software_marker",
+                            "title": "Site Reliability Internship - Spring 2027",
+                            "first_seen": "t"},
+        "greenhouse:x::2": {"outcome": "rejected", "reason": "title_reject:mechanical",
+                            "title": "Mechanical Engineering Intern", "first_seen": "t"},
+    }
+    freed = poller.rescan_rejected(state)
+
+    assert freed == ["greenhouse:x::1"], "only the one the filter now accepts"
+    assert "greenhouse:x::1" not in state["seen"], "released, so the next fetch rediscovers it"
+    assert "greenhouse:x::2" in state["seen"], "still genuinely rejected"
+
+
+def test_rescan_never_touches_notified_or_bootstrap_entries():
+    """Releasing a notified job would re-push it; releasing bootstrap entries would
+    re-surface the entire pre-existing backlog as if it were new."""
+    state = new_state()
+    state["seen"] = {
+        "a::1": {"outcome": "notified", "title": "Software Engineer Intern", "first_seen": "t"},
+        "a::2": {"outcome": "bootstrap", "first_seen": "t"},
+        "a::3": {"outcome": "backfill", "first_seen": "t"},
+        "a::4": {"outcome": "duplicate", "title": "Software Engineer Intern", "first_seen": "t"},
+    }
+    assert poller.rescan_rejected(state) == []
+    assert len(state["seen"]) == 4
+
+
+def test_rescan_only_runs_when_the_filter_actually_changed(tmp_path, monkeypatch):
+    p = _seeded_state(tmp_path, ["greenhouse:vardaspace"])
+    st, _ = load_state(p)
+    st["filter_version"] = poller.filter_version()
+    st["seen"]["greenhouse:vardaspace::old"] = {
+        "outcome": "rejected", "reason": "no_software_marker",
+        "title": "Site Reliability Internship - Spring 2027", "first_seen": "t"}
+    save_state(p, st)
+
+    _run_with(monkeypatch, tmp_path, p, {"greenhouse:vardaspace": []}, [GH_CFG])
+    final, _ = load_state(p)
+    assert "greenhouse:vardaspace::old" in final["seen"], "unchanged filter must not re-scan"
+
+
+# --------------------------------------------------------------------------------------
+# Finding 14 -- production reimplemented the filter instead of calling it
+# --------------------------------------------------------------------------------------
+
+
+def test_poller_uses_filters_evaluate(monkeypatch, tmp_path):
+    """evaluate() had five tests and zero production callers; run() reimplemented the
+    title -> content -> clearance sequence inline, so the two could drift."""
+    called = []
+    real = poller.filters.evaluate
+    monkeypatch.setattr(poller.filters, "evaluate",
+                        lambda j: called.append(j["title"]) or real(j))
+    p = _seeded_state(tmp_path, ["greenhouse:vardaspace"])
+    jobs = [job(source="greenhouse:vardaspace", job_id="1",
+                title="Software Engineer Intern, Summer 2027", company="Varda Space")]
+    _run_with(monkeypatch, tmp_path, p, {"greenhouse:vardaspace": jobs}, [GH_CFG])
+    assert called, "run() must go through filters.evaluate, not its own copy"

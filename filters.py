@@ -33,6 +33,13 @@ from typing import Iterable
 INTERNSHIP_MARKERS: tuple[str, ...] = (
     "intern", "internship", "co-op", "coop", "early career", "student", "new grad",
     "summer 2027", "fall 2027", "winter 2028",
+    # Added 2026-09-16. Not in section 6, but these are the words companies on the live
+    # board list actually use, each verified against a real posting that was being dropped:
+    "new graduate",     # SpaceX  "New Graduate Engineer, Software"
+    "entry level",      # Muon    "Software Engineer, Entry-Level"
+    "associate",        # Astranis uses "... Associate (Spring 2027)" instead of "Intern"
+    "emerging talent",  # Vast    "Emerging Talent - ... Internship"
+    "university",       # common on Workday student boards
 )
 
 SOFTWARE_MARKERS: tuple[str, ...] = (
@@ -40,6 +47,17 @@ SOFTWARE_MARKERS: tuple[str, ...] = (
     "autonomy", "simulation", "backend", "full stack", "full-stack", "platform",
     "infrastructure", "devops", "robotics software", "perception", "data engineer",
     "machine learning", "computer vision",
+    # Added 2026-09-16, each from a real posting rejected as no_software_marker:
+    "developer",         # "Server Firmware Developer", "Web Developer Intern"
+    "sde",               # Amazon-style titles
+    "web",               # Rocket Lab "Web Services Intern"
+    "site reliability",  # Varda "Site Reliability Internship - Spring 2027"
+    "sre",
+    "computer science",
+    "test automation",   # Zipline "System Test Automation Intern (Summer 2027)"
+    "distributed systems",
+    "compiler",
+    "data science",
 )
 
 TITLE_REJECT: tuple[str, ...] = (
@@ -89,6 +107,19 @@ _BLOCK_TAGS = re.compile(r"</?(br|p|li|div|h[1-6]|tr|ul|ol|table)[^>]*>", re.I)
 _ANY_TAG = re.compile(r"<[^>]+>")
 _SEPARATORS = re.compile(r"[ \-]+")
 
+# Allowed continuation after a needle, so a keyword also matches its longer inflections.
+# Added 2026-09-16 after an audit found real postings being silently dropped:
+#   "new grad"      did not match SpaceX  "New Graduate Engineer, Software"
+#   "data engineer" did not match Kodiak  "Winter 2027 Intern, Data Engineering"
+# The old pattern allowed only an optional trailing "s", so anything longer failed.
+#
+# This is deliberately a SHORT closed list of English suffixes rather than `[a-z]*`. The
+# word-boundary lookarounds are what stop `intern` matching "Internal" and `swe` matching
+# "Sweden", and a greedy tail would blow straight through them -- "intern" + "al" would
+# match "internal" again, undoing the single most important property of this module. Every
+# substring-trap test in tests/test_filters.py guards exactly that.
+_TAIL = r"(?:s|es|ing|ed|uate|uates|uation|ship|ships|er|ers)?"
+
 
 def _needle_pattern(needle: str) -> re.Pattern[str]:
     """Compile one keyword into a word-boundary pattern.
@@ -111,7 +142,7 @@ def _needle_pattern(needle: str) -> re.Pattern[str]:
     # substituted in uniformly.
     body = body.replace("\\ ", " ").replace("\\-", "-")
     body = _SEPARATORS.sub(r"[\\s\\-]+", body)
-    return re.compile(rf"(?<![a-z0-9]){body}s?(?![a-z0-9])")
+    return re.compile(rf"(?<![a-z0-9]){body}{_TAIL}(?![a-z0-9])")
 
 
 def _compile_all(needles: Iterable[str]) -> tuple[tuple[str, re.Pattern[str]], ...]:
@@ -226,9 +257,15 @@ def check_clearance(
     neutralized if an allow phrase sits in the surrounding window. Only an occurrence with
     no allow phrase near it rejects the job.
 
-    An empty body is a pass with clearance_checked=False. Lever and Ashby supply no
-    description at all, and rejecting on missing content would drop real jobs -- a
-    spurious push costs two seconds, a missed posting costs the internship.
+    An empty body is a pass with clearance_checked=False, because rejecting on missing
+    content would drop real jobs -- a spurious push costs two seconds, a missed posting
+    costs the internship.
+
+    Which sources actually reach this check, measured 2026-09-14: Lever (64/64 matching
+    roles), Ashby (8/8) and Pinpoint (3/3) all ship descriptions inline; Greenhouse supplies
+    one lazily via greenhouse_fetch_content; Workday and BambooHR supply none. So roughly
+    half the corpus is clearance-checked. An earlier version of this docstring claimed
+    Lever and Ashby "supply no description at all", which was simply wrong.
     """
     s = normalize_content(content)
     if not s:
