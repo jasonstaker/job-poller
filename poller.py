@@ -42,12 +42,23 @@ SUMMARY_THRESHOLD = 8
 # version counting ALL new jobs across all 61 boards, so a flood of junk on one board
 # suppressed -- and permanently buried -- the two real internships beside it.
 ANOMALY_NOTIFY_THRESHOLD = 25
-# Section 9 alert thresholds.
+# Section 9 alert thresholds, in OBSERVATIONS.
 FAILURE_ALERT_STREAK = 3
 ZERO_ALERT_STREAK = 5
-# Section 9 taken literally would re-alert every 30 minutes forever on a permanently dead
-# board. Fire at the threshold, then at most once a day (48 runs at the */30 cadence).
-ALERT_COOLDOWN_RUNS = 48
+# The cooldown is WALL-CLOCK, not a run count. It used to be 48 runs, chosen to mean "once
+# a day" at the */30 cron -- but GitHub actually delivers ~3.8h between runs, which
+# stretched it to 7.6 days. A single dropped alert bought a dead board a week of silence.
+ALERT_COOLDOWN_HOURS = 24
+# A board that has NEVER returned a job is either a dead token or legitimately empty. It
+# now gets one alert once it has been dead this long, instead of being exempt forever --
+# which is what silenced greenhouse:capellaspace and lever:attabotics for their entire
+# lifetime while both sat at 12 consecutive zeros.
+NEVER_WORKED_ALERT_HOURS = 48
+# A collapsing job count is the signature of token drift to a smaller board, a renamed
+# payload key, or Workday pagination truncating. None of those trip any other alert,
+# because they all return HTTP 200 with a plausible-looking payload.
+COUNT_DROP_FRACTION = 0.5
+COUNT_DROP_MIN_BASELINE = 20
 # Section 8 says poll Workday every 4th run because it throttles harder. That assumed the
 # */30 cron; GitHub actually delivers roughly one run every 3.5 hours, which would leave
 # Workday ~14 hours stale -- and Workday holds NVIDIA's 27 matching roles. ~180 rapid probe
@@ -316,14 +327,17 @@ def _source_health(state: dict, sid: str) -> dict:
         "consecutive_zeros": 0,
         "last_ok_run": None,
         "first_ok_run": None,
+        "last_nonzero_at": None,
         "backfilled_at": None,
-        "last_failure_alert_run": None,
-        "last_zero_alert_run": None,
+        "job_count_baseline": 0,
+        "last_failure_alert_at": None,
+        "last_zero_alert_at": None,
+        "last_count_alert_at": None,
     })
 
 
 def update_health(state: dict, results: list[handlers.FetchResult],
-                  run_counter: int) -> tuple[list[str], list[str]]:
+                  now: str) -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
     """Update per-source counters and decide which alerts are due.
 
     Only sources actually polled this run are touched. On the three runs in four where
@@ -333,8 +347,8 @@ def update_health(state: dict, results: list[handlers.FetchResult],
     Returns (broken, drifted) as lists of human-readable strings, aggregated by the caller
     into a single push rather than one per source.
     """
-    broken: list[str] = []
-    drifted: list[str] = []
+    broken: list[tuple[str, str, str]] = []
+    drifted: list[tuple[str, str, str]] = []
 
     for result in results:
         health = _source_health(state, result.source)
@@ -343,37 +357,77 @@ def update_health(state: dict, results: list[handlers.FetchResult],
         if not result.ok:
             health["consecutive_failures"] += 1
             if (health["consecutive_failures"] >= FAILURE_ALERT_STREAK
-                    and _alert_due(health, "last_failure_alert_run", run_counter)):
-                health["last_failure_alert_run"] = run_counter
-                broken.append(f"{result.source} ({health['consecutive_failures']}x): {result.error}")
+                    and _alert_due(health, "last_failure_alert_at", now)):
+                broken.append((result.source, "last_failure_alert_at",
+                               f"{result.source} ({health['consecutive_failures']}x): "
+                               f"{result.error}"))
             continue
 
         health["consecutive_failures"] = 0
         if health.get("first_ok_run") is None:
-            health["first_ok_run"] = run_counter
-        if result.jobs:
+            health["first_ok_run"] = now
+        health["last_ok_run"] = now
+        count = len(result.jobs)
+
+        if count:
+            baseline = health.get("job_count_baseline") or 0
+            if (baseline >= COUNT_DROP_MIN_BASELINE
+                    and count < baseline * COUNT_DROP_FRACTION
+                    and _alert_due(health, "last_count_alert_at", now)):
+                drifted.append((result.source, "last_count_alert_at",
+                                f"{result.source}: {count} jobs, was {baseline}"))
+            # High-water mark, decayed gently so a genuine seasonal shrink eventually
+            # becomes the new normal rather than alerting forever.
+            health["job_count_baseline"] = max(count, int(baseline * 0.9))
             health["consecutive_zeros"] = 0
-            health["last_ok_run"] = run_counter
+            health["last_nonzero_at"] = now
             continue
 
         health["consecutive_zeros"] += 1
-        # Section 9 says "a source that PREVIOUSLY RETURNED JOBS returns zero". A board
-        # that has never returned anything is a bad token or a legitimately empty board
-        # (section 5 says Attabotics may be one) -- the probe reports those, not a push
-        # every 30 minutes.
-        if health["last_ok_run"] is None:
+        if health.get("last_nonzero_at") is None:
+            # Never returned a single job. This was exempt FOREVER, which is exactly what
+            # silenced capellaspace and attabotics across their whole lifetime. Now it
+            # alerts once, after long enough that a transient empty board is ruled out.
+            age = _hours_since(health.get("first_ok_run"), now)
+            if (age is not None and age >= NEVER_WORKED_ALERT_HOURS
+                    and _alert_due(health, "last_zero_alert_at", now)):
+                drifted.append((result.source, "last_zero_alert_at",
+                                f"{result.source}: never returned a job in "
+                                f"{health['consecutive_zeros']} polls -- token may be dead"))
             continue
         if (health["consecutive_zeros"] >= ZERO_ALERT_STREAK
-                and _alert_due(health, "last_zero_alert_run", run_counter)):
-            health["last_zero_alert_run"] = run_counter
-            drifted.append(f"{result.source} ({health['consecutive_zeros']} runs at zero)")
+                and _alert_due(health, "last_zero_alert_at", now)):
+            drifted.append((result.source, "last_zero_alert_at",
+                            f"{result.source} ({health['consecutive_zeros']} polls at zero)"))
 
     return broken, drifted
 
 
-def _alert_due(health: dict, field: str, run_counter: int) -> bool:
-    last = health.get(field)
-    return last is None or (run_counter - last) >= ALERT_COOLDOWN_RUNS
+def stamp_alerts(state: dict, alerts: list[tuple[str, str, str]], now: str) -> None:
+    """Record that an alert was delivered. Only called after a SUCCESSFUL push.
+
+    Stamping inside update_health meant one transient ntfy failure marked the alert as
+    delivered and bought a dead board a full cooldown of silence.
+    """
+    for sid, field, _ in alerts:
+        _source_health(state, sid)[field] = now
+
+
+def _hours_since(stamp: str | None, now: str) -> float | None:
+    if not stamp:
+        return None
+    try:
+        a = datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ")
+        b = datetime.strptime(now, "%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError):
+        return None
+    return (b - a).total_seconds() / 3600.0
+
+
+def _alert_due(health: dict, field: str, now: str) -> bool:
+    """Wall-clock cooldown, so a throttled cron cannot stretch it. See ALERT_COOLDOWN_HOURS."""
+    elapsed = _hours_since(health.get(field), now)
+    return elapsed is None or elapsed >= ALERT_COOLDOWN_HOURS
 
 
 # --------------------------------------------------------------------------------------
@@ -534,7 +588,7 @@ def run(args) -> int:
     #    could only suppress a real notification from an established board.
     kept, dropped = dedupe(fresh_jobs)
 
-    broken, drifted = update_health(state, results, run_counter)
+    broken, drifted = update_health(state, results, now)
 
     new_by_source: dict[str, int] = {}
     for job in new_jobs:
@@ -579,12 +633,20 @@ def run(args) -> int:
 
     # Section 9 alerts, aggregated: a network blip that breaks 20 boards sends one push.
     if (broken or drifted) and not args.dry_run:
-        body = "\n".join(["Broken:", *broken] if broken else [])
+        body = "\n".join(["Broken:", *(m for _, _, m in broken)]) if broken else ""
         if drifted:
-            body += ("\n" if body else "") + "\n".join(["Zero for several runs:", *drifted])
-        notify.notify_alert(f"Job poller: {len(broken) + len(drifted)} source(s) unhealthy", body)
-    for line in broken + drifted:
-        log.warning("UNHEALTHY %s", line)
+            body += ("\n" if body else "") + "\n".join(
+                ["Suspicious:", *(m for _, _, m in drifted)])
+        if notify.notify_alert(
+                f"Job poller: {len(broken) + len(drifted)} source(s) unhealthy", body):
+            stamp_alerts(state, broken + drifted, now)
+        else:
+            # Deliberately NOT stamped: an undelivered alert must re-fire next run rather
+            # than buy a dead board a full cooldown of silence.
+            log.error("::error::health alert could not be delivered; will retry next run")
+            undelivered += 1
+    for _, _, line in broken + drifted:
+        log.warning("::warning::UNHEALTHY %s", line)
 
     state["run_counter"] = run_counter
     state["last_run_at"] = now

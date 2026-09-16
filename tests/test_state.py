@@ -9,7 +9,7 @@ import pytest
 import handlers
 import poller
 from poller import (
-    ALERT_COOLDOWN_RUNS,
+    ALERT_COOLDOWN_HOURS,
     StateCorrupt,
     dedupe,
     diff_new,
@@ -281,72 +281,124 @@ def test_lever_loses_to_ashby_which_loses_to_greenhouse():
 # --------------------------------------------------------------------------------------
 
 
+def _t(hours: int) -> str:
+    """A timestamp `hours` after a fixed epoch, for the wall-clock health thresholds."""
+    from datetime import datetime, timedelta, timezone
+    base = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    return (base + timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def test_failure_streak_alerts_at_three():
     state = new_state()
-    for run in (1, 2):
-        broken, _ = update_health(state, [result("lever:x", ok=False, error="HTTP 500")], run)
+    for h in (0, 4):
+        broken, _ = update_health(state, [result("lever:x", ok=False, error="HTTP 500")], _t(h))
         assert broken == []
-    broken, _ = update_health(state, [result("lever:x", ok=False, error="HTTP 500")], 3)
-    assert len(broken) == 1 and "lever:x" in broken[0]
+    broken, _ = update_health(state, [result("lever:x", ok=False, error="HTTP 500")], _t(8))
+    assert len(broken) == 1 and "lever:x" in broken[0][2]
 
 
 def test_success_resets_the_failure_streak():
     state = new_state()
-    update_health(state, [result("lever:x", ok=False)], 1)
-    update_health(state, [result("lever:x", jobs=[job()])], 2)
+    update_health(state, [result("lever:x", ok=False)], _t(0))
+    update_health(state, [result("lever:x", jobs=[job()])], _t(4))
     assert state["sources"]["lever:x"]["consecutive_failures"] == 0
 
 
-def test_failure_alert_does_not_refire_every_run():
-    """Taken literally, section 9 would push every 30 minutes forever on a dead board."""
+def test_an_unstamped_alert_refires_next_run():
+    """Alerts are staged, not stamped. Stamping inside update_health meant one transient
+    ntfy failure bought a dead board a full cooldown of silence."""
     state = new_state()
-    fired = 0
-    for run in range(1, 20):
-        broken, _ = update_health(state, [result("lever:x", ok=False)], run)
-        fired += len(broken)
-    assert fired == 1, "one alert, then a cooldown"
-
-
-def test_failure_alert_refires_after_the_cooldown():
-    state = new_state()
-    for run in range(1, 4):
-        update_health(state, [result("lever:x", ok=False)], run)
-    broken, _ = update_health(state, [result("lever:x", ok=False)], 3 + ALERT_COOLDOWN_RUNS)
+    for h in (0, 4, 8):
+        broken, _ = update_health(state, [result("lever:x", ok=False)], _t(h))
     assert len(broken) == 1
+    broken, _ = update_health(state, [result("lever:x", ok=False)], _t(12))
+    assert len(broken) == 1, "not stamped, so it must fire again"
 
 
-def test_zero_streak_alerts_only_after_a_source_has_worked():
+def test_a_stamped_alert_is_suppressed_until_the_cooldown_expires():
     state = new_state()
-    # Never returned anything: a bad token or a legitimately empty board (Attabotics).
-    for run in range(1, 10):
-        _, drifted = update_health(state, [result("lever:attabotics", jobs=[])], run)
-        assert drifted == [], "a never-working board must not alert; the probe reports it"
+    for h in (0, 4, 8):
+        broken, _ = update_health(state, [result("lever:x", ok=False)], _t(h))
+    poller.stamp_alerts(state, broken, _t(8))
+
+    _, _ = update_health(state, [result("lever:x", ok=False)], _t(12))
+    broken2, _ = update_health(state, [result("lever:x", ok=False)], _t(20))
+    assert broken2 == [], "inside the 24h cooldown"
+    broken3, _ = update_health(state, [result("lever:x", ok=False)],
+                               _t(8 + ALERT_COOLDOWN_HOURS + 1))
+    assert len(broken3) == 1, "cooldown expired, must re-alert"
+
+
+def test_cooldown_is_wall_clock_not_run_count():
+    """The old cooldown was 48 runs, meant as 'once a day' at */30. GitHub actually
+    delivers ~3.8h between runs, which stretched it to 7.6 days."""
+    state = new_state()
+    for h in (0, 4, 8):
+        broken, _ = update_health(state, [result("lever:x", ok=False)], _t(h))
+    poller.stamp_alerts(state, broken, _t(8))
+    # Only 3 further runs, but 25 hours of wall clock: the cooldown must have expired.
+    broken2, _ = update_health(state, [result("lever:x", ok=False)], _t(33))
+    assert len(broken2) == 1
+
+
+def test_a_board_that_never_returns_a_job_eventually_alerts():
+    """Previously exempt FOREVER via `last_ok_run is None`, which silenced
+    greenhouse:capellaspace and lever:attabotics across their entire lifetime."""
+    state = new_state()
+    _, drifted = update_health(state, [result("lever:attabotics", jobs=[])], _t(0))
+    assert drifted == [], "not immediately -- a briefly empty board is normal"
+    _, drifted = update_health(state, [result("lever:attabotics", jobs=[])], _t(12))
+    assert drifted == []
+    _, drifted = update_health(state, [result("lever:attabotics", jobs=[])], _t(60))
+    assert len(drifted) == 1 and "never returned a job" in drifted[0][2]
 
 
 def test_zero_streak_alerts_after_five_once_it_has_worked():
     state = new_state()
-    update_health(state, [result("greenhouse:x", jobs=[job()])], 1)
-    for run in range(2, 6):
-        _, drifted = update_health(state, [result("greenhouse:x", jobs=[])], run)
+    update_health(state, [result("greenhouse:x", jobs=[job()])], _t(0))
+    for i in range(1, 5):
+        _, drifted = update_health(state, [result("greenhouse:x", jobs=[])], _t(i * 4))
         assert drifted == []
-    _, drifted = update_health(state, [result("greenhouse:x", jobs=[])], 6)
-    assert len(drifted) == 1 and "greenhouse:x" in drifted[0]
+    _, drifted = update_health(state, [result("greenhouse:x", jobs=[])], _t(20))
+    assert len(drifted) == 1 and "greenhouse:x" in drifted[0][2]
+
+
+def test_a_collapsing_job_count_alerts():
+    """Token drift to a smaller board, a renamed payload key, and Workday truncation all
+    return HTTP 200 with a plausible payload. The count is the only tell."""
+    state = new_state()
+    update_health(state, [result("greenhouse:x", jobs=[job(job_id=str(i)) for i in range(300)])], _t(0))
+    _, drifted = update_health(state, [result("greenhouse:x", jobs=[job()])], _t(4))
+    assert len(drifted) == 1 and "1 jobs, was 300" in drifted[0][2]
+
+
+def test_a_modest_shrink_does_not_alert():
+    state = new_state()
+    update_health(state, [result("greenhouse:x", jobs=[job(job_id=str(i)) for i in range(100)])], _t(0))
+    _, drifted = update_health(state, [result("greenhouse:x", jobs=[job(job_id=str(i)) for i in range(80)])], _t(4))
+    assert drifted == []
+
+
+def test_a_tiny_board_never_trips_the_count_alert():
+    """Wisk legitimately carries 2-3 postings; that must never look like a collapse."""
+    state = new_state()
+    update_health(state, [result("workday:wisk", jobs=[job(job_id="a"), job(job_id="b")])], _t(0))
+    _, drifted = update_health(state, [result("workday:wisk", jobs=[job(job_id="a")])], _t(4))
+    assert drifted == []
 
 
 def test_unpolled_sources_keep_their_counters():
-    """On the 3 runs in 4 where Workday is skipped, its counters must not drift."""
     state = new_state()
-    update_health(state, [result("workday:blueorigin:BlueOrigin", ok=False)], 1)
+    update_health(state, [result("workday:blueorigin:BlueOrigin", ok=False)], _t(0))
     before = dict(state["sources"]["workday:blueorigin:BlueOrigin"])
-
-    update_health(state, [result("greenhouse:x", jobs=[job()])], 2)   # workday not polled
+    update_health(state, [result("greenhouse:x", jobs=[job()])], _t(4))
     assert state["sources"]["workday:blueorigin:BlueOrigin"] == before
 
 
 def test_state_updates_are_persisted():
     state = new_state()
     update_health(state, [result("greenhouse:physicsx", jobs=[job()],
-                                 state_updates={"greenhouse_host": "eu"})], 1)
+                                 state_updates={"greenhouse_host": "eu"})], _t(0))
     assert state["sources"]["greenhouse:physicsx"]["greenhouse_host"] == "eu"
 
 
