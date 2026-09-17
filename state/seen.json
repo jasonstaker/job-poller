@@ -1,7 +1,7 @@
 {
   "bootstrapped_at": "2026-09-13T04:54:14Z",
-  "last_run_at": "2026-09-16T23:05:08Z",
-  "run_counter": 26,
+  "last_run_at": "2026-09-17T01:33:42Z",
+  "run_counter": 27,
   "schema_version": 1,
   "seen": {
     "ashby:Luminary::00e195a3-ea18-43ee-b13f-996a80de57b5": {
@@ -1964,6 +1964,12 @@
     "ashby:saronic::5353e481-3810-4a68-a09c-28235a17e086": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "ashby:saronic::552906b5-671d-41e4-83af-2fad2e5c56bb": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Director of International Growth - Australia"
     },
     "ashby:saronic::55a173f1-81e2-4932-bf73-c6c20811b555": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -6216,6 +6222,12 @@
     "greenhouse:andurilindustries::5123069007": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:andurilindustries::5123455007": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Quality Control Supervisor"
     },
     "greenhouse:andurilindustries::5123989007": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -13661,6 +13673,12 @@
       "reason": "no_internship_marker",
       "title": "Senior Flight Test Engineer"
     },
+    "greenhouse:andurilindustries::5240451007": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior Software Product Manager, ArsenalOS Quality"
+    },
     "greenhouse:apptronik::5572958004": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -14056,6 +14074,12 @@
     "greenhouse:archer56::7589564003": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:archer56::7589567003": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior iOS Engineer"
     },
     "greenhouse:archer56::7592228003": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -14604,6 +14628,12 @@
     "greenhouse:archer56::7982301003": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
+    },
+    "greenhouse:archer56::7984475003": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Staff Software Engineer, Android"
     },
     "greenhouse:archer56::7985643003": {
       "first_seen": "2026-09-16T20:18:00Z",
@@ -23285,6 +23315,12 @@
       "reason": "title_reject:technician",
       "title": "Integration Technician I, Thrust Structure"
     },
+    "greenhouse:relativity::8815855002": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "title_reject:recruiter",
+      "title": "Senior Corporate G&A Recruiter"
+    },
     "greenhouse:rocketlab::5557802003": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -25154,6 +25190,18 @@
       "outcome": "rejected",
       "reason": "no_software_marker",
       "title": "Security Analyst Intern Summer 2027"
+    },
+    "greenhouse:rocketlab::7986963003": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_software_marker",
+      "title": "Security Analyst Intern Summer 2027"
+    },
+    "greenhouse:rocketlab::7986965003": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_software_marker",
+      "title": "Security Analyst Intern Spring 2027"
     },
     "greenhouse:rocketlab::7987020003": {
       "first_seen": "2026-09-16T20:18:00Z",
@@ -36373,6 +36421,12 @@
       "reason": "no_internship_marker",
       "title": "Supplier Development Engineer, SMT (Starlink)"
     },
+    "greenhouse:spacex::8802771002": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "title_reject:welder",
+      "title": "Electron Beam Welder (Raptor Combustion Devices) - 2nd Shift"
+    },
     "greenhouse:spacex::8802882002": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -36820,6 +36874,24 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Supervisor, Welding (Starship) - Night Shift"
+    },
+    "greenhouse:spacex::8815840002": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Starlink Customer Success Specialist"
+    },
+    "greenhouse:spacex::8815844002": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "title_reject:supply chain",
+      "title": "Dimensional Inspector - Supply Chain"
+    },
+    "greenhouse:spacex::8815850002": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Accountant"
     },
     "greenhouse:stokespacetechnologies::4963182004": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -39966,6 +40038,12 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Integration Build Engineer"
+    },
+    "greenhouse:vast::4713874006": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Materials & Processes Engineer, Metallics"
     },
     "greenhouse:vatnsystems::4170296009": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -43966,6 +44044,12 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Associate Systems Administrator (R5873)"
+    },
+    "lever:shieldai::f4320a4e-63ee-4e4d-b80c-085e2f632109": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Associate Facilities Coordinator (R6005)"
     },
     "lever:shieldai::f56dc368-862d-46fe-afe5-899f225547b5": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -48284,6 +48368,12 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "Engineer - Quality III"
+    },
+    "workday:blueorigin:BlueOrigin::/job/Space-Coast-FL/Engineer---Sr-Configuration---Data-Management_R68798": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Engineer - Sr. Configuration & Data Management"
     },
     "workday:blueorigin:BlueOrigin::/job/Space-Coast-FL/Executive-Assistant-II_R68141": {
       "first_seen": "2026-09-14T18:01:13Z",
@@ -53305,6 +53395,12 @@
       "outcome": "backfill",
       "title": "Executive Content and Social Media Manager"
     },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/GPU-Architecture-Engineer---New-College-Grad-2026_JR2021615": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "GPU Architecture Engineer - New College Grad 2026"
+    },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/GPU-Development-Tools-System-Software-Engineer_JR2015871-1": {
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
@@ -53364,6 +53460,12 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "HPC Operations Engineer"
+    },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/HPC-Technical-Account-Manager_JR2025875": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "HPC Technical Account Manager"
     },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Hardware-Systems-Application-Engineer---CSP_JR2013593": {
       "first_seen": "2026-09-14T18:01:13Z",
@@ -53621,6 +53723,12 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "Senior Partner Enablement Product Manager, Storage Platform"
+    },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Performance-Engineer_JR2025748": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Performance Engineer"
     },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/PhD-Research-Intern--Autonomous-Systems-and-Physical-AI-Research---2027_JR2024171": {
       "first_seen": "2026-09-14T18:01:13Z",
@@ -53906,6 +54014,18 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "Security Research Engineer, AI Safety and Security Engineering"
+    },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Segment-Sales-Director--Physical-AI-and-Digital-Twins---GTM_JR2024904": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "title_reject:sales",
+      "title": "Segment Sales Director, Physical AI and Digital Twins – GTM"
+    },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Segment-Sales-Lead--Mission-Control-Software_JR2024543-1": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "title_reject:sales",
+      "title": "Segment Sales Lead, Mission Control Software"
     },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Segment-Sales-Lead--NCP-Software_JR2024474": {
       "first_seen": "2026-09-16T17:10:45Z",
@@ -54736,6 +54856,12 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "Senior QA Software Engineer - Networking"
+    },
+    "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Senior-RMA-Customer-Experience-Manager_JR2026021": {
+      "first_seen": "2026-09-17T01:33:42Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior RMA Customer Experience Manager"
     },
     "workday:nvidia:NVIDIAExternalCareerSite::/job/US-CA-Santa-Clara/Senior-RMA-Customer-Service-Transformation-Engineer_JR2021539": {
       "first_seen": "2026-09-14T18:01:13Z",
@@ -55961,110 +56087,110 @@
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:applied": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:gecko-robotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:havocai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:reliable-robotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:sanctuary": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:saronic": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:skydio": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "ashby:skywatch": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "bamboohr:sedarotech": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:agilityrobotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:andurilindustries": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:apptronik": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:archer56": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:astranis": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:capellaspace": {
       "consecutive_failures": 0,
-      "consecutive_zeros": 26,
+      "consecutive_zeros": 27,
       "last_failure_alert_run": null,
       "last_ok_run": null,
       "last_zero_alert_run": null
@@ -56073,194 +56199,194 @@
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:epirus": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:figureai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:flyzipline": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:ionq": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:k2spacecorporation": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:kodiak": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:machindustries": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:muonspace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:nerostechnologies": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:nuro": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:physicsx": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:planetlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:relativity": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:rocketlab": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:scaleai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:schrdinger": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:spacex": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:stokespacetechnologies": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:torcrobotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:trueanomalyinc": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:ursamajor": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:vannevarlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:vardaspace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:vast": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:vatnsystems": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "greenhouse:whisperaero": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:attabotics": {
       "consecutive_failures": 0,
-      "consecutive_zeros": 26,
+      "consecutive_zeros": 27,
       "last_failure_alert_run": null,
       "last_ok_run": null,
       "last_zero_alert_run": null
@@ -56269,119 +56395,119 @@
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:kepler": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:loftorbital": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:merlinlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:palantir": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:pyka": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:shieldai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:telesat": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "lever:zoox": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "pinpoint:impulsespace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "workable:ghgsat": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "workday:blueorigin:BlueOrigin": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "workday:bostondynamics:Boston_Dynamics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "workday:cadence:Univ_Careers": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "workday:cae:career": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "workday:nvidia:NVIDIAExternalCareerSite": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     },
     "workday:wisk:Wisk_Careers": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
       "last_failure_alert_run": null,
-      "last_ok_run": 26,
+      "last_ok_run": 27,
       "last_zero_alert_run": null
     }
   }
