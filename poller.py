@@ -865,6 +865,88 @@ def _notify_and_record(state, passed, rejected, dropped, new_jobs, now, args) ->
     return undelivered
 
 
+URGENCY_TIERS = [
+    (-10 ** 9, "Probably skip"),
+    (40, "Worth a look"),
+    (100, "Strong match"),
+    (145, "Apply now"),
+]
+URGENCY_TIERS.sort(key=lambda t: -t[0])
+
+_WORKDAY_AGE = re.compile(r"posted\s+(.*)", re.I)
+
+
+def _posting_age_days(job: dict) -> int | None:
+    """Days since the board posted this role, or None when it does not say.
+
+    Uneven by source, deliberately not papered over: Greenhouse reports last-updated rather
+    than posted, Workday reports prose ("Posted 4 Days Ago") capped at 30, and BambooHR and
+    Pinpoint report nothing at all.
+    """
+    raw = (job.get("posted_at") or "").strip()
+    if not raw:
+        return None
+    prose = _WORKDAY_AGE.match(raw)
+    if prose:
+        text = prose.group(1).lower()
+        if "today" in text:
+            return 0
+        if "yesterday" in text:
+            return 1
+        digits = re.search(r"(\d+)", text)
+        return int(digits.group(1)) if digits else None
+    try:
+        cleaned = re.sub(r"(\.\d{3})\d+", r"\1", raw.replace("Z", "+00:00"))
+        return max(0, (datetime.now(timezone.utc) - datetime.fromisoformat(cleaned)).days)
+    except (TypeError, ValueError):
+        return None
+
+
+def urgency_score(job: dict) -> int:
+    """How soon to apply: term relevance plus recency.
+
+    Tuned for someone graduating April 2028 targeting Summer 2027. The heavy negatives
+    matter as much as the positives -- 2026-cycle roles, intern-conversion reqs (which
+    require having already interned there) and unanchored New Grad postings are for people
+    graduating now, roughly 18 months too early, and would otherwise crowd the top.
+    """
+    t = job.get("title", "").lower()
+    score = 0
+    if re.search(r"summer\s*2027", t):
+        score += 100
+    elif re.search(r"fall\s*2027|winter\s*2028", t):
+        score += 80
+    elif "2027" in t:
+        score += 85
+    elif re.search(r"co[\s-]?op", t):
+        score += 50
+    elif "intern" in t:
+        score += 45
+    else:
+        score += 10
+
+    if "2026" in t and "2027" not in t:
+        score -= 95
+    if "intern conversion" in t:
+        score -= 60
+    if re.search(r"new\s*grad", t) and not re.search(r"202[78]", t):
+        score -= 35
+
+    if re.search(r"software engineer|software engineering|\bswe\b|software developer", t):
+        score += 25
+    elif re.search(r"backend|full[\s-]?stack|embedded|firmware|flight software|"
+                   r"ground software|infrastructure|platform|compiler|site reliability", t):
+        score += 22
+    elif re.search(r"machine learning|computer vision|perception|autonomy|simulation|"
+                   r"data engineer|robotics", t):
+        score += 14
+    if re.search(r"test develop|\bqa\b|quality", t):
+        score -= 12
+
+    age = _posting_age_days(job)
+    return score + max(0, 45 - (21 if age is None else age))
+
+
 def cmd_list_open(sources: list[dict], ctx: FetchContext, path: pathlib.Path) -> int:
     """Write every currently-open posting that passes the title filter to a markdown file.
 
@@ -884,27 +966,51 @@ def cmd_list_open(sources: list[dict], ctx: FetchContext, path: pathlib.Path) ->
             continue
         rows.extend(j for j in result.jobs if filters.check_title(j["title"]).passed)
 
-    rows.sort(key=lambda j: (j["company"].casefold(), j["title"].casefold()))
-    companies = sorted({j["company"] for j in rows}, key=str.casefold)
+    # Collapse a role posted across several cities into one row -- you apply once.
+    groups: dict[tuple[str, str], dict] = {}
+    for job in rows:
+        key = (job["company"], job["title"].strip().casefold())
+        g = groups.setdefault(key, {**job, "locs": [], "n": 0, "score": -999})
+        g["n"] += 1
+        if job["location"] and job["location"] not in g["locs"]:
+            g["locs"].append(job["location"])
+        score = urgency_score(job)
+        if score > g["score"]:
+            g.update(score=score, url=job["url"])
+
+    items = sorted(groups.values(), key=lambda r: -r["score"])
+    companies = {r["company"] for r in items}
 
     lines = [
-        f"# Open SWE internships matching the filter ({len(rows)})",
+        "# What to apply to, most urgent first",
         "",
         f"Generated {utcnow()} by `python poller.py --list-open`. Re-run it to refresh;",
         "this is a point-in-time snapshot, not something the poller keeps up to date.",
         "",
-        f"{len(rows)} roles across {len(companies)} companies.",
+        f"{len(items)} distinct roles ({len(rows)} postings) across {len(companies)} companies.",
+        "",
+        "Ranked by relevance plus recency. Summer 2027 outranks other terms; core software",
+        "outranks ML/robotics-adjacent; test/QA is nudged down. Anything on the 2026 cycle, an",
+        "intern-conversion req, or a New Grad role with no 2027/2028 anchor sinks to the bottom",
+        "-- those are for people graduating now, not April 2028. Recency is days since posting,",
+        "which is uneven: Workday reports prose capped at 30 days, a few sources report nothing,",
+        "and Greenhouse reports last-updated rather than posted.",
     ]
-    current = None
-    for job in rows:
-        if job["company"] != current:
-            current = job["company"]
-            lines += ["", f"## {current}", ""]
-        where = f" — {job['location']}" if job["location"] else ""
-        lines.append(f"- [{job['title']}]({job['url']}){where}")
+    for cut, name in URGENCY_TIERS:
+        hi = next((c for c, _ in URGENCY_TIERS if c > cut), 10 ** 9)
+        tier = [r for r in items if cut <= r["score"] < hi]
+        if not tier:
+            continue
+        lines += ["", f"## {name} ({len(tier)})", ""]
+        for r in tier:
+            age = _posting_age_days(r)
+            when = "date unknown" if age is None else ("today" if age == 0 else f"{age}d ago")
+            where = f"{r['n']} locations" if r["n"] > 1 else (r["locs"][0] if r["locs"] else "")
+            bits = [b for b in (r["company"], when, where) if b]
+            lines.append(f"- [{r['title']}]({r['url']}) — " + " · ".join(bits))
 
     path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
-    log.info("wrote %d roles across %d companies to %s", len(rows), len(companies), path)
+    log.info("wrote %d roles across %d companies to %s", len(items), len(companies), path)
     return 0
 
 

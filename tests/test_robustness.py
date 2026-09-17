@@ -335,3 +335,43 @@ def test_dry_run_never_sends_a_heartbeat(tmp_path, monkeypatch):
     poller.maybe_heartbeat(state, [], "2026-09-16T00:00:00Z",
                            Args(tmp_path / "s.json", dry_run=True))
     assert sent == []
+
+
+# --------------------------------------------------------------------------------------
+# open-internships.md ranking (folded into --list-open so it survives regeneration)
+# --------------------------------------------------------------------------------------
+
+
+def _j(title, posted=""):
+    return {"title": title, "posted_at": posted, "company": "X", "location": "", "url": "u"}
+
+
+def test_summer_2027_software_outranks_everything():
+    best = poller.urgency_score(_j("Software Engineer Intern, Summer 2027"))
+    for other in ("Software Engineer Intern", "Mechanical Intern Summer 2027",
+                  "Software Engineer - New Grad", "Data Science Intern"):
+        assert poller.urgency_score(_j(other)) < best, other
+
+
+def test_wrong_cycle_roles_sink_to_the_bottom():
+    """The user graduates April 2028, so these are ~18 months too early."""
+    good = poller.urgency_score(_j("Software Engineer Intern, Summer 2027"))
+    for stale in ("2026 Intern Conversion - Software Development Engineer I",
+                  "Software Engineer - New Grad (December 2026)",
+                  "Software Development Engineer I - Early Career (2026 Starts)"):
+        assert poller.urgency_score(_j(stale)) < good - 100, stale
+
+
+def test_fresher_postings_rank_higher():
+    a = poller.urgency_score(_j("Software Engineer Intern, Summer 2027", "Posted Today"))
+    b = poller.urgency_score(_j("Software Engineer Intern, Summer 2027",
+                                "Posted 30+ Days Ago"))
+    assert a > b
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("Posted Today", 0), ("Posted Yesterday", 1), ("Posted 4 Days Ago", 4),
+    ("Posted 30+ Days Ago", 30), ("", None), ("not a date", None),
+])
+def test_posting_age_parses_every_shape_the_boards_emit(raw, expected):
+    assert poller._posting_age_days(_j("t", raw)) == expected
