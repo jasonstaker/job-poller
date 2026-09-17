@@ -1,7 +1,9 @@
 {
   "bootstrapped_at": "2026-09-13T04:54:14Z",
-  "last_run_at": "2026-09-17T17:10:32Z",
-  "run_counter": 30,
+  "filter_version": "086253da2340",
+  "last_heartbeat_at": "2026-09-17T17:28:08Z",
+  "last_run_at": "2026-09-17T17:28:08Z",
+  "run_counter": 31,
   "schema_version": 1,
   "seen": {
     "ashby:Luminary::00e195a3-ea18-43ee-b13f-996a80de57b5": {
@@ -13045,9 +13047,8 @@
       "title": "Winter 2027 Technical Program Management Co-op"
     },
     "greenhouse:andurilindustries::5236573007": {
-      "first_seen": "2026-09-15T20:39:56Z",
-      "outcome": "rejected",
-      "reason": "no_software_marker",
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "notified",
       "title": "Winter 2027 Test Automation Engineer Co-op"
     },
     "greenhouse:andurilindustries::5236577007": {
@@ -13572,9 +13573,8 @@
       "title": "Senior Software Product Lead, ArsenalOS"
     },
     "greenhouse:andurilindustries::5239596007": {
-      "first_seen": "2026-09-16T20:18:00Z",
-      "outcome": "rejected",
-      "reason": "no_internship_marker",
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "notified",
       "title": "Firmware Engineer, Space (Emerging Talent)"
     },
     "greenhouse:andurilindustries::5239687007": {
@@ -13846,6 +13846,12 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "People Program Manager"
+    },
+    "greenhouse:andurilindustries::5241178007": {
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Mission Integration Engineer"
     },
     "greenhouse:apptronik::5572958004": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -19316,6 +19322,18 @@
       "outcome": "rejected",
       "reason": "no_internship_marker",
       "title": "Senior Post-Silicon Validation Engineer"
+    },
+    "greenhouse:k2spacecorporation::5427330008": {
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior MMIC Design Engineer"
+    },
+    "greenhouse:k2spacecorporation::5427343008": {
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Senior MMIC Design Engineer"
     },
     "greenhouse:kodiak::4005123009": {
       "first_seen": "2026-09-13T04:54:14Z",
@@ -37247,6 +37265,12 @@
       "reason": "title_reject:supply chain",
       "title": "Supply Chain Systems Analyst (Launch)"
     },
+    "greenhouse:spacex::8816517002": {
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "rejected",
+      "reason": "title_reject:manufacturing",
+      "title": "Additive Manufacturing Engineer (Raptor)"
+    },
     "greenhouse:stokespacetechnologies::4963182004": {
       "first_seen": "2026-09-13T04:54:14Z",
       "outcome": "bootstrap"
@@ -46729,9 +46753,8 @@
       "title": "Development Test Engineering Intern (Summer 2027)"
     },
     "pinpoint:impulsespace::579199": {
-      "first_seen": "2026-09-14T20:48:01Z",
-      "outcome": "rejected",
-      "reason": "no_software_marker",
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "notified",
       "title": "Test Automation Intern (Summer 2027)"
     },
     "pinpoint:impulsespace::580091": {
@@ -48738,6 +48761,12 @@
       "first_seen": "2026-09-14T18:01:13Z",
       "outcome": "backfill",
       "title": "Buyer II or II - Fixed Term"
+    },
+    "workday:blueorigin:BlueOrigin::/job/Space-Coast-FL/Buyer-Sr--Evergreen-_R72417": {
+      "first_seen": "2026-09-17T17:28:08Z",
+      "outcome": "rejected",
+      "reason": "no_internship_marker",
+      "title": "Buyer Sr. (Evergreen)"
     },
     "workday:blueorigin:BlueOrigin::/job/Space-Coast-FL/CAPA-Engineer-III_R70612": {
       "first_seen": "2026-09-14T18:01:13Z",
@@ -56584,428 +56613,607 @@
     "ashby:Luminary": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 11,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:applied": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 290,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:gecko-robotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 23,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:havocai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 26,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:reliable-robotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 56,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:sanctuary": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 6,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:saronic": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 209,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:skydio": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 133,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "ashby:skywatch": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 2,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "bamboohr:sedarotech": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 14,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:agilityrobotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 73,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:andurilindustries": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 2343,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:apptronik": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 84,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:archer56": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 156,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:astranis": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 85,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:capellaspace": {
       "consecutive_failures": 0,
-      "consecutive_zeros": 30,
+      "consecutive_zeros": 31,
+      "first_ok_run": "2026-09-17T17:28:08Z",
       "last_failure_alert_run": null,
-      "last_ok_run": null,
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:chaosindustries": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 126,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:epirus": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 41,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:figureai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 103,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:flyzipline": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 343,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:ionq": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 104,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:k2spacecorporation": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 238,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:kodiak": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 63,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:machindustries": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 116,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:muonspace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 119,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:nerostechnologies": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 87,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:nuro": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 107,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:physicsx": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 39,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:planetlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 113,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:relativity": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 332,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:rocketlab": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 527,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:scaleai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 221,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:schrdinger": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 25,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:spacex": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 2477,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:stokespacetechnologies": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 68,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:torcrobotics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 52,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:trueanomalyinc": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 186,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:ursamajor": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 107,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:vannevarlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 28,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:vardaspace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 95,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:vast": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 201,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:vatnsystems": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 22,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "greenhouse:whisperaero": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 9,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:attabotics": {
       "consecutive_failures": 0,
-      "consecutive_zeros": 30,
+      "consecutive_zeros": 31,
+      "first_ok_run": "2026-09-17T17:28:08Z",
       "last_failure_alert_run": null,
-      "last_ok_run": null,
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:elroyair": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 8,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:kepler": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 18,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:loftorbital": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 57,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:merlinlabs": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 27,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:palantir": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 313,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:pyka": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 19,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:shieldai": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 498,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:telesat": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 48,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "lever:zoox": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 239,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "pinpoint:impulsespace": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 190,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "workable:ghgsat": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 6,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "workday:blueorigin:BlueOrigin": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 484,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "workday:bostondynamics:Boston_Dynamics": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 74,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "workday:cadence:Univ_Careers": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 8,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "workday:cae:career": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 235,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "workday:nvidia:NVIDIAExternalCareerSite": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 1010,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     },
     "workday:wisk:Wisk_Careers": {
       "consecutive_failures": 0,
       "consecutive_zeros": 0,
+      "first_ok_run": "2026-09-17T17:28:08Z",
+      "job_count_baseline": 2,
       "last_failure_alert_run": null,
-      "last_ok_run": 30,
+      "last_nonzero_at": "2026-09-17T17:28:08Z",
+      "last_ok_run": "2026-09-17T17:28:08Z",
       "last_zero_alert_run": null
     }
   }
