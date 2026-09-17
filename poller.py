@@ -60,6 +60,9 @@ NEVER_WORKED_ALERT_HOURS = 48
 # because they all return HTTP 200 with a plausible-looking payload.
 COUNT_DROP_FRACTION = 0.5
 COUNT_DROP_MIN_BASELINE = 20
+# How often the deadman heartbeat fires. Long enough not to be noise, short enough that a
+# silently disabled cron is noticed in days rather than at the end of the hiring season.
+HEARTBEAT_HOURS = 168
 # Section 8 says poll Workday every 4th run because it throttles harder. That assumed the
 # */30 cron; GitHub actually delivers roughly one run every 3.5 hours, which would leave
 # Workday ~14 hours stale -- and Workday holds NVIDIA's 27 matching roles. ~180 rapid probe
@@ -234,6 +237,40 @@ def save_state(path: pathlib.Path, state: dict) -> None:
     # os.replace, NOT os.rename: rename raises FileExistsError on Windows when the
     # destination exists, which is every run after the first.
     os.replace(tmp, path)
+
+
+def maybe_heartbeat(state: dict, results: list, now: str, args) -> bool:
+    """Weekly "still alive" push. The deadman switch.
+
+    The healthy output of this tool is silence, so "working but quiet" and "dead" have
+    identical observable signatures. Nothing else covers the failures that live OUTSIDE the
+    Python: GitHub dropping scheduled runs (it is already dropping ~84% of them), GitHub
+    disabling the workflow after 60 days of repo inactivity -- bot commits are widely
+    reported not to reset that timer -- Actions being disabled, or a workflow syntax error
+    on main. A dead poller sends no alerts by definition, because it never runs.
+
+    Low priority so it does not read as urgent on a lock screen.
+    """
+    if args.dry_run:
+        return False
+    elapsed = _hours_since(state.get("last_heartbeat_at"), now)
+    if elapsed is not None and elapsed < HEARTBEAT_HOURS:
+        return False
+    if elapsed is None and state.get("last_heartbeat_at") is None and not state.get("seen"):
+        return False        # nothing to report on a brand-new state
+
+    ok = sum(1 for r in results if r.ok)
+    notified = sum(1 for v in state["seen"].values() if v.get("outcome") == "notified")
+    body = (f"{ok}/{len(results)} boards healthy.\n"
+            f"{len(state['seen'])} postings tracked, {notified} sent to you so far.\n"
+            f"Run {state.get('run_counter', 0)}. If this stops arriving, something broke.")
+    if notify.send(title="Job poller: weekly check-in", body=body,
+                   tags="heartbeat", priority="low"):
+        state["last_heartbeat_at"] = now
+        log.info("heartbeat sent")
+        return True
+    log.error("::error::heartbeat could not be delivered")
+    return False
 
 
 def filter_version() -> str:
@@ -585,7 +622,9 @@ def run(args) -> int:
                   "bootstrapping would silently mark every open role as seen.", args.state)
         return 3
     current_filter = filter_version()
-    if not is_bootstrap and state.get("filter_version") not in (None, current_filter):
+    # An absent version counts as "changed": the first run after this shipped should do the
+    # catch-up too. Safe on a fresh bootstrap, where there is nothing to release.
+    if not is_bootstrap and state.get("filter_version") != current_filter:
         freed = rescan_rejected(state)
         if freed:
             log.info("FILTER CHANGED (%s -> %s): released %d previously-rejected job(s) "
@@ -701,6 +740,8 @@ def run(args) -> int:
     state["last_run_at"] = now
     if is_bootstrap:
         state["bootstrapped_at"] = now
+
+    maybe_heartbeat(state, results, now, args)
 
     ok_count = sum(1 for r in results if r.ok)
     log.info("run %d: %d/%d sources ok, %d total jobs, %d new, %d notified, %d rejected, "

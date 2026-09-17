@@ -291,3 +291,47 @@ def test_poller_uses_filters_evaluate(monkeypatch, tmp_path):
                 title="Software Engineer Intern, Summer 2027", company="Varda Space")]
     _run_with(monkeypatch, tmp_path, p, {"greenhouse:vardaspace": jobs}, [GH_CFG])
     assert called, "run() must go through filters.evaluate, not its own copy"
+
+
+# --------------------------------------------------------------------------------------
+# Finding 5 -- no deadman switch
+# --------------------------------------------------------------------------------------
+
+
+def test_heartbeat_fires_once_a_week(tmp_path, monkeypatch):
+    """The only detector for the poller dying ENTIRELY.
+
+    A dead poller sends no alerts by definition, because it never runs. GitHub is already
+    dropping ~84% of scheduled runs, and disables scheduled workflows on public repos after
+    60 days of inactivity -- bot commits are widely reported not to reset that timer.
+    """
+    sent = []
+    monkeypatch.setattr(poller.notify, "send", lambda **kw: sent.append(kw) or True)
+    state = new_state()
+    state["seen"] = {"a::1": {"outcome": "notified", "first_seen": "t"}}
+    args = Args(tmp_path / "s.json")
+
+    assert poller.maybe_heartbeat(state, [], "2026-09-16T00:00:00Z", args)
+    assert state["last_heartbeat_at"] == "2026-09-16T00:00:00Z"
+    assert sent[0]["priority"] == "low", "must not read as urgent on a lock screen"
+
+    assert not poller.maybe_heartbeat(state, [], "2026-09-18T00:00:00Z", args), "too soon"
+    assert poller.maybe_heartbeat(state, [], "2026-09-24T00:00:00Z", args), "a week later"
+
+
+def test_heartbeat_is_not_stamped_when_the_push_fails(tmp_path, monkeypatch):
+    monkeypatch.setattr(poller.notify, "send", lambda **kw: False)
+    state = new_state()
+    state["seen"] = {"a::1": {"outcome": "notified", "first_seen": "t"}}
+    poller.maybe_heartbeat(state, [], "2026-09-16T00:00:00Z", Args(tmp_path / "s.json"))
+    assert state.get("last_heartbeat_at") is None, "an undelivered heartbeat must retry"
+
+
+def test_dry_run_never_sends_a_heartbeat(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(poller.notify, "send", lambda **kw: sent.append(kw) or True)
+    state = new_state()
+    state["seen"] = {"a::1": {"outcome": "notified", "first_seen": "t"}}
+    poller.maybe_heartbeat(state, [], "2026-09-16T00:00:00Z",
+                           Args(tmp_path / "s.json", dry_run=True))
+    assert sent == []

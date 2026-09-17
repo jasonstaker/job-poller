@@ -6,6 +6,8 @@ on:
     # can lag several minutes under load; that is acceptable for a minutes-to-an-hour
     # latency target. Actions minutes are unlimited on a public repo, so this is free.
     - cron: '*/30 * * * *'
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -34,6 +36,8 @@ concurrency:
 
 jobs:
   poll:
+    # Never poll on a plain push -- that is the test job's business.
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -65,6 +69,23 @@ jobs:
             python poller.py
           fi
 
+      - name: Alert on failure
+        # Best effort: this cannot work when ntfy itself is what broke. GitHub's own
+        # Actions failure email is the backstop, and the weekly heartbeat is the real
+        # detector for the poller dying entirely.
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true
+        run: >
+          python -c "import notify, os;
+          notify.notify_alert('Job poller: run FAILED',
+          'The poll run failed. Check the Actions log: ' +
+          os.environ['RUN_URL'])"
+        # RUN_URL is passed in rather than interpolated into the Python, so the workflow
+        # cannot be broken by quoting.
+
       - name: Commit state
         # Runs even if the poll step failed, so a partially-advanced state is not lost.
         # Skipped for probe/dry-run, neither of which writes state.
@@ -81,9 +102,9 @@ jobs:
           fi
 
   test:
-    # Manual runs only. On a */30 cron this would re-run the suite 1,440 times a month
-    # against code that has not changed, roughly doubling the Actions bill for nothing.
-    if: github.event_name == 'workflow_dispatch'
+    # On every push and every manual run, but NOT on the schedule: re-running the suite
+    # against unchanged code on each cron tick would bury the poll runs in the Actions tab.
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
