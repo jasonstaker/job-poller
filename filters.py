@@ -36,6 +36,11 @@ INTERNSHIP_MARKERS: tuple[str, ...] = (
     # Added 2026-09-16. Not in section 6, but these are the words companies on the live
     # board list actually use, each verified against a real posting that was being dropped:
     "new graduate",     # SpaceX  "New Graduate Engineer, Software"
+    # NVIDIA writes "New College Grad", which `new grad` cannot match because the needle
+    # requires the two words to be adjacent. Listing "college grad" covers both that and
+    # "New College Graduate" via the stem tail. Found 2026-09-18 on 4 live roles including
+    # "AI Compiler Engineer - New College Grad 2027".
+    "college grad",
     "entry level",      # Muon    "Software Engineer, Entry-Level"
     "associate",        # Astranis uses "... Associate (Spring 2027)" instead of "Intern"
     "emerging talent",  # Vast    "Emerging Talent - ... Internship"

@@ -295,3 +295,23 @@ def test_every_clearance_needle_rejects_itself(needle):
 @pytest.mark.parametrize("phrase", CLEARANCE_ALLOW)
 def test_every_allow_phrase_alone_passes(phrase):
     assert check_clearance(f"Note: {phrase}.").passed
+
+
+@pytest.mark.parametrize("title", [
+    # NVIDIA phrasing, found live 2026-09-18. `new grad` cannot match these because it
+    # requires the two words to be adjacent.
+    "AI Compiler Engineer- New College Grad 2027",
+    "Software R&D Engineer, VLSI Physical Design - New College Grad 2027",
+    "NVIDIA 2027 New College Graduate: Software Engineering",
+])
+def test_new_college_grad_phrasing_is_caught(title):
+    assert check_title(title).passed, title
+
+
+@pytest.mark.parametrize("title", [
+    "Senior Robotics Software Engineer, Sentry Tower",   # "Sentry" contains "entry"
+    "Campus Infrastructure Project Manager",             # facilities, not early-career
+])
+def test_early_career_lookalikes_still_rejected(title):
+    """Guards the widened vocabulary against the substring trap it could reintroduce."""
+    assert not check_title(title).passed, title
